@@ -2,24 +2,28 @@ from Constraint import Constraint
 from Force import Force
 from Vector3D import Vector3D
 
-class node():
+class Node():
     def __init__(self, x1, x2, x3):
         """
         Initialize a Node object with a degree of freedom
         """
+        # Set default values for position, displacement, constraint, force, and dof_number
         self.position = Vector3D(x1, x2, x3)
         self.displacement = Vector3D()
         self.constraint = None
         self.force = None
         self.dof_number = [0, 0, 0]
+        # Print the node's position
+        self.print()
 
     def set_force(self, force_vector):
         """
         Set the force vector associated with the node.
         """
-        if not isinstance(force_vector, Force):
+        vector = Force(force_vector)
+        if not isinstance(vector, Force):
             raise ValueError("Force must be a Force object.")
-        self.force = force_vector
+        self.force = vector
 
     def get_force(self):
         """
@@ -33,10 +37,12 @@ class node():
         """
         Set the boundary conditions for the node.
         """
-        if not isinstance(boundary_conditions, Constraint):
-            raise ValueError("Boundary conditions must be a Constraint object.")
-        self.constraint = boundary_conditions
+        dof = Constraint(boundary_conditions)
+        if not isinstance(dof, Constraint):
+            raise ValueError("Constraint must be a Constraint object.")
+        self.constraint = dof
         
+
     def get_constraint(self):
         """
         Get the constraint associated with the node.
@@ -45,14 +51,18 @@ class node():
             raise ValueError("No constraint associated with this node.")
         return self.constraint
 
-    def enumerate_dof(self, dof_number)
+    def enumerate_dof(self):
         """
-        Enumerate the degrees of freedom for the node.
+        Enumerate the degrees of freedom for the node based on the False DOF.
         """
-        dof_number = [1, 2, 3] if dof_number is None else dof_number
-        if len(dof_number) != 3:
-            raise ValueError("DOF number must have three components.")
-        self.dof_number = dof_number
+        # Assuming self.constraint.u1, u2, u3 are booleans: True if constrained, False if free
+        self.dof_number = [
+            0 if self.constraint.u1 else 1,
+            0 if self.constraint.u2 else 1,
+            0 if self.constraint.u3 else 1
+        ]
+        # Counts the number of degrees of freedom = number of non-fixed DOF
+        print(f"DOF number for node: {self.dof_number.count(1)}")
     
     def get_dof_number(self):
         """
@@ -70,9 +80,10 @@ class node():
         """
         Set the displacement of the node.
         """
-        if not isinstance(displacement, Vector3D):
+        dist = Vector3D(displacement[0], displacement[1], displacement[2])
+        if not isinstance(dist, Vector3D):
             raise ValueError("Displacement must be a Vector3D object.")
-        self.displacement = displacement
+        self.displacement = dist
 
     def get_displacement(self):
         """
@@ -84,4 +95,4 @@ class node():
         """
         Print the coordinates of the node.
         """
-        print(f"Node coordinates: x={self.x}, y={self.y}, z={self.z}")
+        print(f"Node coordinates: x={self.position.x}, y={self.position.y}, z={self.position.z}")
