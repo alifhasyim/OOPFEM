@@ -13,7 +13,7 @@ class Node():
         self.constraint = None
         self.force = None
         self.dof_number = [0, 0, 0]
-        # Print the node's position
+        # Print the node's coordinates
         self.print()
 
     def set_force(self, force_vector):
