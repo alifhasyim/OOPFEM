@@ -3,6 +3,7 @@ from Force import Force
 from Vector3D import Vector3D
 
 class Node():
+    all_nodes = []
     def __init__(self, x1, x2, x3):
         """
         Initialize a Node object with a degree of freedom
@@ -15,6 +16,12 @@ class Node():
         self.dof_number = [0, 0, 0]
         # Print the node's coordinates
         self.print()
+        # Append this instance to the class-level list
+        Node.all_nodes.append(self)
+    
+    def __str__(self):
+        pos = self.get_position()
+        return f"Node(x={pos.x}, y={pos.y}, z={pos.z})"
 
     def set_force(self, force_vector):
         """
