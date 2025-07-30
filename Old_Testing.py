@@ -1,4 +1,4 @@
-
+import pyvista as pv
 
 #boundary_n1 = [True, False, True]
 #boundary_n2 = [False, True, False]
@@ -36,3 +36,11 @@
 # element2 = Structure1.add_element(Element(2, 1, n3, n4))
 # print(f"This is element 2: {element2}")
 # print(f"This is structure 1: {Structure1}")
+
+cone = pv.Cone()
+
+
+p = pv.Plotter()
+
+p.add_mesh(cone, color='lightblue', show_edges=True)
+p.show()

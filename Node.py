@@ -9,6 +9,7 @@ class Node():
         Initialize a Node object with a degree of freedom
         """
         # Set default values for position, displacement, constraint, force, and dof_number
+        self.coord = [x1, x2, x3]
         self.position = Vector3D(x1, x2, x3)
         self.displacement = Vector3D()
         self.constraint = None
@@ -20,7 +21,7 @@ class Node():
         Node.all_nodes.append(self)
 
     def __str__(self):
-        return f"Node(position={self.position.x}, {self.position.y}, {self.position.z})"
+        return f"[{self.position.x}, {self.position.y}, {self.position.z}]"
     
     def set_force(self, force_vector):
         """

@@ -17,7 +17,7 @@ class Constraint():
         Constraint.all_constraint.append(self)
     
     def __str__(self):
-        return f"Constraint(boundary conditions={self.u1}, {self.u2}, {self.u3})"
+        return f"[{self.u1}, {self.u2}, {self.u3}]"
 
     def print(self):
         """
