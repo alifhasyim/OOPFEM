@@ -1,7 +1,5 @@
 class Constraint():
     
-    all_constraint = []
-    
     def __init__(self, boundary):
         if len(boundary) != 3:
             raise ValueError("Constraint requires three boolean values.")
@@ -14,7 +12,6 @@ class Constraint():
             raise ValueError("Boundary conditions must have three components.")
         elif not all(isinstance(val, bool) for val in boundary):
             raise ValueError("All boundary values must be boolean.")
-        Constraint.all_constraint.append(self)
     
     def __str__(self):
         return f"[{self.u1}, {self.u2}, {self.u3}]"

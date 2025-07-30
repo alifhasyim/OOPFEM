@@ -1,7 +1,7 @@
 from Node import Node
 import numpy as np
 class Element:
-    all_elements = []
+    
     def __init__(self, area, e_modulus, node1, node2):
         """
         Initialize an Element object with two nodes.
@@ -15,7 +15,6 @@ class Element:
         self.node1 = node1
         self.node2 = node2
         #self.print_nodes()
-        Element.all_elements.append(self)
     
     def __str__(self):
         return f"Element(area={self.area}, e_modulus={self.e_modulus}, node1={self.node1}, node2={self.node2})"
@@ -60,14 +59,11 @@ class Element:
         pos1 = self.node1.get_position()
         pos2 = self.node2.get_position()
         # Calculate the differences in coordinates
-        dx = pos2.x - pos1.x
-        dy = pos2.y - pos1.y
-        dz = pos2.z - pos1.z
+        length = np.linalg.norm(np.subtract(pos2, pos1))
         # Calculate the length 
-        length = (dx**2 + dy**2 + dz**2)**0.5
         return length
     
-    def get_node(self):
+    def get_nodes(self):
         """
         Get the node of the object associated with the element.
         """

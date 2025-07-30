@@ -1,62 +1,48 @@
 from Constraint import Constraint
 from Force import Force
-from Vector3D import Vector3D
+import numpy as np
 
 class Node():
-    all_nodes = []
     def __init__(self, x1, x2, x3):
         """
         Initialize a Node object with a degree of freedom
         """
         # Set default values for position, displacement, constraint, force, and dof_number
-        self.coord = [x1, x2, x3]
-        self.position = Vector3D(x1, x2, x3)
-        self.displacement = Vector3D()
-        self.constraint = None
-        self.force = None
+        self.position = [x1, x2, x3]
+        self.displacement = [0, 0, 0]
+        self.constraint = [False, False, False]
+        self.force = Force([0, 0, 0])
         self.dof_number = [0, 0, 0]
         # Print the node's coordinates
         #self.print()
-        # Append this instance to the class-level list
-        Node.all_nodes.append(self)
-
+  
     def __str__(self):
-        return f"[{self.position.x}, {self.position.y}, {self.position.z}]"
+        return f"[{self.position[0]}, {self.position[1]}, {self.position[2]}]"
     
     def set_force(self, force_vector):
         """
         Set the force vector associated with the node.
         """
-        vector = Force(force_vector)
-        if not isinstance(vector, Force):
-            raise ValueError("Force must be a Force object.")
-        self.force = vector
+        self.force = Force(force_vector)
+        return self.force
 
     def get_force(self):
         """
         Get the force vector associated with the node"
         """
-        if self.force is None:
-            raise ValueError("No force vector associated with this node.")
         return self.force
 
     def set_constraint(self, boundary_conditions):
         """
         Set the boundary conditions for the node.
         """
-        dof = Constraint(boundary_conditions)
-        if not isinstance(dof, Constraint):
-            raise ValueError("Constraint must be a Constraint object.")
-        self.constraint = dof
+        self.constraint = Constraint(boundary_conditions)
         return self.constraint
         
-
     def get_constraint(self):
         """
         Get the constraint associated with the node.
         """
-        if self.constraint is None:
-            raise ValueError("No constraint associated with this node.")
         return self.constraint
 
     def enumerate_dof(self):
@@ -88,9 +74,7 @@ class Node():
         """
         Set the displacement of the node.
         """
-        dist = Vector3D(displacement[0], displacement[1], displacement[2])
-        if not isinstance(dist, Vector3D):
-            raise ValueError("Displacement must be a Vector3D object.")
+        dist = np.array(displacement)
         self.displacement = dist
 
     def get_displacement(self):

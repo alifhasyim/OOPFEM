@@ -12,26 +12,20 @@ class Structure:
     def __str__(self):
         return f"Structure with {len(self.nodes)} nodes and {len(self.elements)} elements."
 
-    def add_node(self, node):
+    def add_node(self, x1, x2, x3):
         """
         Add a node to the structure.
         """
-        if not isinstance(node, Node):
-            raise ValueError("Input must be an instance of Node.")
-    
-        single_nodal = Node(node.position.x, node.position.y, node.position.z)
+        single_nodal = Node(x1, x2, x3)
         self.nodes.append(single_nodal)
         return single_nodal
         
     
-    def add_element(self, element):
+    def add_element(self, area, e_modulus, node1, node2):
         """
         Add an element to the structure.
         """
-        if not isinstance(element, Element):
-            raise ValueError("Element must be an instance of Element.")
-        
-        single_element = Element(element.area, element.e_modulus, element.node1, element.node2)
+        single_element = Element(area, e_modulus, node1, node2)
         self.elements.append(single_element)
         return single_element
 
@@ -45,13 +39,6 @@ class Structure:
         """
         Get the number of elements in the structure.
         """
-        if not hasattr(self, 'elements'):
-            raise ValueError("No elements in the structure.")
-        if not isinstance(self.elements, list):
-            raise ValueError("Elements must be a list.")
-        if not self.elements:
-            raise ValueError("Element list is empty.")
-        
         return len(self.elements)
 
     def get_element(self, index):
