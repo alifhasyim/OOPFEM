@@ -60,6 +60,24 @@ class Element:
 
         print(f"Length of element: {length}")
         return length
+    
+    def get_node(self):
+        """
+        Get the node of the object associated with the element.
+        """
+        return self.node1, self.node2
+    
+    def get_area(self):
+        """
+        Get the defined area. 
+        """
+        return self.area
+
+    def get_modulus(self):
+        """
+        Get the elastic modulus of the element
+        """
+        return self.e_modulus
         
     
     def print_properties(self):

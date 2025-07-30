@@ -103,3 +103,4 @@ class Node():
         Print the coordinates of the node.
         """
         print(f"Node coordinates: x={self.position.x}, y={self.position.y}, z={self.position.z}")
+        
