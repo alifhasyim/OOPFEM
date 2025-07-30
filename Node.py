@@ -15,14 +15,13 @@ class Node():
         self.force = None
         self.dof_number = [0, 0, 0]
         # Print the node's coordinates
-        self.print()
+        #self.print()
         # Append this instance to the class-level list
         Node.all_nodes.append(self)
-    
-    def __str__(self):
-        pos = self.get_position()
-        return f"Node(x={pos.x}, y={pos.y}, z={pos.z})"
 
+    def __str__(self):
+        return f"Node(position={self.position.x}, {self.position.y}, {self.position.z})"
+    
     def set_force(self, force_vector):
         """
         Set the force vector associated with the node.
@@ -48,6 +47,7 @@ class Node():
         if not isinstance(dof, Constraint):
             raise ValueError("Constraint must be a Constraint object.")
         self.constraint = dof
+        return self.constraint
         
 
     def get_constraint(self):
@@ -69,7 +69,7 @@ class Node():
             0 if self.constraint.u3 else 1
         ]
         # Counts the number of degrees of freedom = number of non-fixed DOF
-        print(f"DOF number for node: {self.dof_number.count(1)}")
+        #print(f"DOF number for node: {self.dof_number.count(1)}")
     
     def get_dof_number(self):
         """

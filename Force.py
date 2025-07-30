@@ -6,7 +6,7 @@ class Force():
         self.r1 = vector[0]
         self.r2 = vector[1]
         self.r3 = vector[2]
-        self.print()
+        #self.print()
 
         # Error handling
         if len(vector) != 3:
