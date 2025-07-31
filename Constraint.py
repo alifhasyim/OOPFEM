@@ -15,6 +15,9 @@ class Constraint():
     
     def __str__(self):
         return f"[{self.u1}, {self.u2}, {self.u3}]"
+    
+    def get_values(self):
+        return [self.u1, self.u2, self.u3]
 
     def print(self):
         """
