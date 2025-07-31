@@ -51,13 +51,12 @@ class Node():
         """
         # Assuming self.constraint.u1, u2, u3 are booleans: True if constrained, False if free
         self.dof_number = [
-            0 if self.constraint[0] else 1,
-            0 if self.constraint[1] else 1,
-            0 if self.constraint[2] else 1
+            0 if self.constraint.u1 else 1,
+            0 if self.constraint.u2 else 1,
+            0 if self.constraint.u3 else 1
         ]
         # Counts the number of degrees of freedom = number of non-fixed DOF
         #print(f"DOF number for node: {self.dof_number.count(1)}")
-        return self.dof_number
     
     def get_dof_number(self):
         """

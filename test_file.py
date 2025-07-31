@@ -12,8 +12,8 @@ n2 = Structure1.add_node(5, 0, 0)
 n3 = Structure1.add_node(5, 0, 0)
 n4 = Structure1.add_node(0, 0, 5)
 
-test1 = n1.enumerate_dof()
-print(f"This is the enumeration: {test1}")
+#test1 = n1.enumerate_dof()
+#print(f"This is the enumeration: {test1}")
 
 # Set up test force
 f2 = n2.set_force(1,2,3)
