@@ -16,8 +16,8 @@ a = mat.pi * (mat.pow(r,2) - mat.pow(r-t,2))
 e = 2.1e11
 
 # Constraint
-c1 = Constraint(False, False, False)
-c2 = Constraint(True, True, False)
+c1 = Constraint([False, False, False])
+c2 = Constraint([True, True, False])
 
 # Set up force
 f1 = Force(0, -20e3, -100e3)
