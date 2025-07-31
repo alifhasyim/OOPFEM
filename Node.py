@@ -11,7 +11,7 @@ class Node():
         self.position = [x1, x2, x3]
         self.displacement = [0, 0, 0]
         self.constraint = [False, False, False]
-        self.force = Force([0, 0, 0])
+        self.force = Force(0, 0, 0)
         self.dof_number = [0, 0, 0]
         # Print the node's coordinates
         #self.print()
@@ -19,11 +19,11 @@ class Node():
     def __str__(self):
         return f"[{self.position[0]}, {self.position[1]}, {self.position[2]}]"
     
-    def set_force(self, force_vector):
+    def set_force(self, f1, f2, f3):
         """
         Set the force vector associated with the node.
         """
-        self.force = Force(force_vector)
+        self.force = Force(f1, f2, f3)
         return self.force
 
     def get_force(self):
@@ -51,12 +51,13 @@ class Node():
         """
         # Assuming self.constraint.u1, u2, u3 are booleans: True if constrained, False if free
         self.dof_number = [
-            0 if self.constraint.u1 else 1,
-            0 if self.constraint.u2 else 1,
-            0 if self.constraint.u3 else 1
+            0 if self.constraint[0] else 1,
+            0 if self.constraint[1] else 1,
+            0 if self.constraint[2] else 1
         ]
         # Counts the number of degrees of freedom = number of non-fixed DOF
         #print(f"DOF number for node: {self.dof_number.count(1)}")
+        return self.dof_number
     
     def get_dof_number(self):
         """

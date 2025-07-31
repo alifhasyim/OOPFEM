@@ -39,11 +39,33 @@ class Visualizer:
                         direction = np.array(direction_vectors[i])
                         # Offset cone so all 3 aren't at same spot
                         center = pos + direction * -0.2
+                        print(f"Position {i}:")
+                        print(center)
                         cone = pv.Cone(center=center, direction=direction, height=0.5, radius=0.1)
                         plotter.add_mesh(cone, color=colors[i])
     
-    def draw_element_Forces(self):
-        return
-    
-    def draw_dipslacement(self):
+    def draw_nodal_forces(self, plotter):
+        """
+        Draw the element force based on the nodal information.
+        """
+        for elem in self.element:
+            nodes = elem.get_nodes()
+            for node in nodes:
+                position = np.array(node.get_position())
+                force_raw = node.get_force()
+                force = np.array(force_raw.get_values())
+                
+                direction = np.array((force))
+                print(direction)
+                if np.allclose(force, [0, 0, 0]):
+                    None
+                else:
+                    arrow = pv.Arrow(start=position, 
+                                     direction=force, 
+                                     tip_length=0.1, 
+                                     tip_radius=0.1, 
+                                     scale=np.linalg.norm(force)/5)
+                    plotter.add_mesh(arrow, color='yellow')
+                    
+    def draw_displacement(self):
         return

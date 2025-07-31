@@ -12,6 +12,14 @@ n2 = Structure1.add_node(5, 0, 0)
 n3 = Structure1.add_node(5, 0, 0)
 n4 = Structure1.add_node(0, 0, 5)
 
+test1 = n1.enumerate_dof()
+print(f"This is the enumeration: {test1}")
+
+# Set up test force
+f2 = n2.set_force(1,2,3)
+f4 = n4.set_force(2,-4,-6)
+print(f"The Force for node 2: {f2.get_values()}")
+
 # Create two elements
 element1 = Structure1.add_element(10, 10, n1, n2)
 element2 = Structure1.add_element(2, 1, n3, n4)
@@ -64,6 +72,7 @@ vis = Vis([element1, element2])
 plotter = pv.Plotter()
 vis.draw_elements(plotter)
 vis.draw_constraint(plotter)
+vis.draw_nodal_forces(plotter)
 plotter.view_isometric()
 plotter.show_axes()
 plotter.show()
