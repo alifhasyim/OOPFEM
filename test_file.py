@@ -3,6 +3,7 @@ from Structure import Structure
 import pyvista as pv
 import numpy as np
 from Visualizer import Visualizer as Vis
+from Force import Force
 
 
 # Create a structure and add nodes
@@ -16,8 +17,10 @@ n4 = Structure1.add_node(0, 0, 5)
 #print(f"This is the enumeration: {test1}")
 
 # Set up test force
-f2 = n2.set_force(1,2,3)
-f4 = n4.set_force(2,-4,-6)
+force2 = Force(1, 2, 3)
+force4 = Force(2, -4, -6)
+f2 = n2.set_force(force2)
+f4 = n4.set_force(force4)
 print(f"The Force for node 2: {f2.get_values()}")
 
 # Create two elements

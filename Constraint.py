@@ -1,23 +1,16 @@
 class Constraint():
     
-    def __init__(self, boundary):
-        if len(boundary) != 3:
-            raise ValueError("Constraint requires three boolean values.")
-        self.u1 = boundary[0]  # Constrain in x
-        self.u2 = boundary[1]  # Constrain in y
-        self.u3 = boundary[2]  # Constrain in z
+    def __init__(self, u1, u2, u3):
+        self.boundary = [u1, u2, u3]
         #self.print()
         # Error handling
-        if len(boundary) != 3:
+        if len(self.boundary) != 3:
             raise ValueError("Boundary conditions must have three components.")
-        elif not all(isinstance(val, bool) for val in boundary):
+        elif not all(isinstance(val, bool) for val in self.boundary):
             raise ValueError("All boundary values must be boolean.")
     
-    def __str__(self):
-        return f"[{self.u1}, {self.u2}, {self.u3}]"
-    
     def get_values(self):
-        return [self.u1, self.u2, self.u3]
+        return self.boundary
 
     def print(self):
         """

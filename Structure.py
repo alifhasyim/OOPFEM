@@ -73,13 +73,11 @@ class Structure:
 
     def enumerate_dof(self):
         """
-        Enumerate the degrees of freedom for all nodes in the structure.
+        Enumerate global DOFs for all nodes in the structure.
         """
-        dof_list = []
+        counter = 0
         for node in self.nodes:
-            dof = node.enumerate_dof()
-            dof_list.extend(dof)
-        return dof_list
+            counter = node.enumerate_dof(counter)
 
     def assemble_stiffness_matrix(self):
         """

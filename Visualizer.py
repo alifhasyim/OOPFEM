@@ -11,7 +11,7 @@ class Visualizer:
         for elem in self.element:
             nodes = [np.array(node.get_position()) for node in elem.get_nodes()]
             line = pv.Line(nodes[0], nodes[1])
-            plotter.add_mesh(line, color='black', line_width=5)
+            plotter.add_mesh(line, color='black', line_width=10)
         
     
     def draw_constraint(self, plotter):
@@ -31,17 +31,14 @@ class Visualizer:
             
             for node in nodes:
                 pos = np.array(node.get_position())  # Assuming 3D coords
-                constraint_raw = node.get_constraint()   
-                constraint = constraint_raw.get_values()
+                constraint = np.array(node.get_constraint().get_values())   
 
                 for i, is_constrained in enumerate(constraint):
                     if is_constrained:
                         direction = np.array(direction_vectors[i])
                         # Offset cone so all 3 aren't at same spot
                         center = pos + direction * -0.2
-                        print(f"Position {i}:")
-                        print(center)
-                        cone = pv.Cone(center=center, direction=direction, height=0.5, radius=0.1)
+                        cone = pv.Cone(center=center, direction=direction, height=1, radius=0.2)
                         plotter.add_mesh(cone, color=colors[i])
     
     def draw_nodal_forces(self, plotter):
@@ -54,9 +51,7 @@ class Visualizer:
                 position = np.array(node.get_position())
                 force_raw = node.get_force()
                 force = np.array(force_raw.get_values())
-                
-                direction = np.array((force))
-                print(direction)
+
                 if np.allclose(force, [0, 0, 0]):
                     None
                 else:
@@ -64,7 +59,7 @@ class Visualizer:
                                      direction=force, 
                                      tip_length=0.1, 
                                      tip_radius=0.1, 
-                                     scale=np.linalg.norm(force)/5)
+                                     scale=3)
                     plotter.add_mesh(arrow, color='yellow')
                     
     def draw_displacement(self):

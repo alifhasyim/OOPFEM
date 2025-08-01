@@ -10,7 +10,7 @@ class Node():
         # Set default values for position, displacement, constraint, force, and dof_number
         self.position = [x1, x2, x3]
         self.displacement = [0, 0, 0]
-        self.constraint = [False, False, False]
+        self.constraint = Constraint(False, False, False)
         self.force = Force(0, 0, 0)
         self.dof_number = [0, 0, 0]
         # Print the node's coordinates
@@ -19,11 +19,13 @@ class Node():
     def __str__(self):
         return f"[{self.position[0]}, {self.position[1]}, {self.position[2]}]"
     
-    def set_force(self, f1, f2, f3):
+    def set_force(self, force: Force):
         """
         Set the force vector associated with the node.
         """
-        self.force = Force(f1, f2, f3)
+        if not isinstance(force, Force):
+            raise TypeError("Expected a Force object.")
+        self.force = force
         return self.force
 
     def get_force(self):
@@ -32,11 +34,13 @@ class Node():
         """
         return self.force
 
-    def set_constraint(self, boundary_conditions):
+    def set_constraint(self, boundary_conditions: Constraint):
         """
         Set the boundary conditions for the node.
         """
-        self.constraint = Constraint(boundary_conditions)
+        if not isinstance(boundary_conditions, Constraint):
+            raise TypeError("Expected a constraint object.")
+        self.constraint = boundary_conditions
         return self.constraint
         
     def get_constraint(self):
@@ -45,18 +49,20 @@ class Node():
         """
         return self.constraint
 
-    def enumerate_dof(self):
+    def enumerate_dof(self, start_index):
         """
-        Enumerate the degrees of freedom for the node based on the False DOF.
+        Enumerate the DOFs for this node, using `-1` for constrained DOFs
+        and incrementing the global counter for free DOFs.
         """
-        # Assuming self.constraint.u1, u2, u3 are booleans: True if constrained, False if free
-        self.dof_number = [
-            0 if self.constraint.u1 else 1,
-            0 if self.constraint.u2 else 1,
-            0 if self.constraint.u3 else 1
-        ]
-        # Counts the number of degrees of freedom = number of non-fixed DOF
-        #print(f"DOF number for node: {self.dof_number.count(1)}")
+        dof = []
+        for is_constrained in self.constraint.get_values():  # [True, False, True]
+            if is_constrained:
+                dof.append(-1)
+            else:
+                dof.append(start_index)
+                start_index += 1
+        self.dof_number = dof
+        return start_index  # Return updated counter
     
     def get_dof_number(self):
         """

@@ -1,4 +1,5 @@
 from Node import Node
+import pandas as pd
 import numpy as np
 class Element:
     
@@ -20,20 +21,43 @@ class Element:
         return f"Element(area={self.area}, e_modulus={self.e_modulus}, node1={self.node1}, node2={self.node2})"
         
     
-    def compute_stiffness_matrix(self, index=0):
+    def compute_stiffness_matrix(self):
         """
-        Compute the stiffness matrix for the element.
+        Compute the 6x6 stiffness matrix for a 3D truss element using dyadic form.
         """
-        if not isinstance(self.node1, Node) or not isinstance(self.node2, Node):
-            raise ValueError("Both nodes must be instances of Node.")
-        # Initialize a 2x2 stiffness matrix
-        self.stiffness_matrix = np.array([[0, 0], [0, 0]])
-        self.stiffness_matrix[0][0] = 1
-        self.stiffness_matrix[0][1] = -1
-        self.stiffness_matrix[1][0] = -1
-        self.stiffness_matrix[1][1] = 1
-        self.new_stiffness_matrix = self.stiffness_matrix * (self.e_modulus * self.area)/self.get_length()
-        return self.new_stiffness_matrix
+        x1 = np.array(self.node1.get_position())
+        x2 = np.array(self.node2.get_position())
+
+        # Element length
+        L_vec = x2 - x1
+        L = np.linalg.norm(L_vec)
+
+        if L == 0:
+            raise ValueError("Element length is zero — nodes are overlapping.")
+
+        # Unit direction vector
+        direction = L_vec / L
+
+        # Outer product (3x3)
+        outer = np.outer(direction, direction)
+
+        # Scale factor
+        scale = (self.e_modulus * self.area) / L
+
+        # Assemble the 6x6 stiffness matrix
+        # Using block matrix form:
+        # [ K  -K ]
+        # [ -K  K ]
+
+        K = scale * outer  # 3x3 local stiffness
+
+        k_global = np.block([
+            [ K, -K],
+            [-K,  K]
+        ])
+
+        self.stiffness_matrix = k_global
+        return k_global
     
     def enumerate_dof(self):
         """
@@ -95,3 +119,9 @@ class Element:
         Print the details of the element.
         """
         print(f"Element between Node 1 at {self.node1} and Node 2 at {self.node2}")
+        
+    def print_stiffness_matrix(self):
+        k = self.compute_stiffness_matrix()
+        df = pd.DataFrame(k)
+        print("Element Stiffness Matrix [k]:")
+        print(df.round(3))
