@@ -19,6 +19,12 @@ class Node():
     def __str__(self):
         return f"[{self.position[0]}, {self.position[1]}, {self.position[2]}]"
     
+    def __hash__(self):
+        return hash(tuple(self.position))
+
+    def __eq__(self, other):
+        return isinstance(other, Node) and self.position == other.position
+    
     def set_force(self, force: Force):
         """
         Set the force vector associated with the node.
@@ -49,20 +55,20 @@ class Node():
         """
         return self.constraint
 
-    def enumerate_dof(self, start_index):
+    def enumerate_dof(self, counter):
         """
         Enumerate the DOFs for this node, using `-1` for constrained DOFs
         and incrementing the global counter for free DOFs.
         """
-        dof = []
-        for is_constrained in self.constraint.get_values():  # [True, False, True]
+        print(f"Enumerating DOF for node at {self.position} with constraint: {self.constraint.fixed}")
+        for i, is_constrained in enumerate(self.constraint.fixed):
             if is_constrained:
-                dof.append(-1)
+                self.dof_number[i] = -1
             else:
-                dof.append(start_index)
-                start_index += 1
-        self.dof_number = dof
-        return start_index  # Return updated counter
+                self.dof_number[i] = counter
+                counter += 1
+        print(f"Assigned DOF numbers: {self.dof_number}")
+        return counter
     
     def get_dof_number(self):
         """

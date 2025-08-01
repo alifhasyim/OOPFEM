@@ -11,6 +11,9 @@ class Force():
     
     def get_values(self):
         return self.force
+    
+    def __getitem__(self, index):
+        return self.force[index]
         
     def print(self):
         """"

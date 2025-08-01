@@ -10,6 +10,7 @@ class Structure:
         """
         self.nodes = []
         self.elements = []
+        self._node_set = set()
 
     def __str__(self):
         return f"Structure with {len(self.nodes)} nodes and {len(self.elements)} elements."
@@ -20,6 +21,8 @@ class Structure:
         """
         single_nodal = Node(x1, x2, x3)
         self.nodes.append(single_nodal)
+        self._node_set.add(single_nodal)
+        print(single_nodal)
         return single_nodal
         
     
@@ -29,6 +32,8 @@ class Structure:
         """
         single_element = Element(area, e_modulus, node1, node2)
         self.elements.append(single_element)
+        self._node_set.add(node1)
+        self._node_set.add(node2)
         return single_element
 
     def get_number_of_nodes(self):
@@ -66,24 +71,64 @@ class Structure:
 
     def solve(self):
         """
-        Solve the structure's equations.
-        This is a placeholder for the actual solving logic.
+        Solve the reduced system only for free DOFs.
         """
         print("Solving structure...")
-        # Implement the solving logic here
-        # This could involve assembling global stiffness matrices, applying boundary conditions, etc.
-        self.displacement = np.linalg.inv(self.K_global) @ self.f_global
+
+        # Identify free DOF indices
+        free_dofs = []
+        for node in self._node_set:
+            for dof in node.dof_number:
+                if dof != -1:
+                    free_dofs.append(dof)
+
+        # Convert to numpy arrays
+        K_ff = self.K_global[np.ix_(free_dofs, free_dofs)]
+        f_f = self.f_global[free_dofs]
+
+        # Solve reduced system
+        u_f = np.linalg.solve(K_ff, f_f)
+
+        # Fill full displacement vector with zeros initially
+        full_disp = np.zeros((len(self.f_global), 1))
+
+        for idx, dof in enumerate(free_dofs):
+            full_disp[dof] = u_f[idx]
+
+        self.displacement = full_disp
+
+        # Assign displacements back to nodes
+        for node in self._node_set:
+            disp = []
+            for dof in node.dof_number:
+                if dof == -1:
+                    disp.append(0.0)
+                else:
+                    disp.append(float(self.displacement[dof]))
+            node.displacement = disp
+
         print("Nodal displacements:")
         print(self.displacement)
+
+        # print("Nodal displacements:")
+        # for i, node in enumerate(self.nodes):
+        #     print(f"Node {i+1}: {self.displacement}")
 
     def enumerate_dof(self):
         """
         Enumerate global DOFs for all nodes in the structure.
         """
+        print("Enumerating global DOFs...")
         counter = 0
         for node in self.nodes:
-            counter = node.enumerate_dof(counter)
+            for i in range(3):
+                if node.constraint.fixed[i]:
+                    node.dof_number[i] = -1
+                else:
+                    node.dof_number[i] = counter
+                    counter += 1
         self.num_dof = counter
+        return counter
 
     def assemble_stiffness_matrix(self):
         """
@@ -95,10 +140,13 @@ class Structure:
         # This could involve iterating over elements and nodes to build the global stiffness matrix
         # Step 1: Enumerate DOFs
         self.enumerate_dof()
+        
 
         # Step 2: Initialize global stiffness matrix
         n = self.num_dof
         self.K_global = np.zeros((n, n))
+        if self.num_dof == 0:
+            raise ValueError("DOF enumeration must be run before assembling stiffness matrix.")
         
         # Step 3: Loop over elements and assemble
         for element in self.elements:
@@ -122,28 +170,31 @@ class Structure:
         This is a placeholder for the actual assembly logic.
         """
         print("Assembling global load vector...")
-        # Implement the assembly logic here
-        # This could involve summing forces from all nodes into a global load vector
         self.enumerate_dof()
-        
+
         n = self.num_dof
         self.f_global = np.zeros((n, 1))
-        
-        for element in self.elements:
-            f_local = element.compute_force()
-            dof_map = element.node1.dof_number + element.node2.dof_number
-            
-            for k_local, k_global in enumerate(dof_map):
-                if k_global == -1:
-                    continue
-                self.f_global[k_global] += f_local[k_local]
+
+        for node in self.nodes:
+            if node.force is None:
+                continue
+            for i, dof in enumerate(node.dof_number):
+                if dof != -1:
+                    self.f_global[dof] += node.force[i]
+
         df = pd.DataFrame(self.f_global)
         print(df)
+        
 
     def select_displacement(self, node_index):
         """
         Select the displacement for a specific node.
         """
+        if 0 <= node_index < len(self.nodes):
+            print(self.nodes[node_index].displacement)
+            return self.nodes[node_index].displacement
+        else:
+            raise IndexError("Node index out of range.")
         
 
     def print_results(self):

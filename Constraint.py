@@ -1,22 +1,21 @@
 class Constraint():
     
-    def __init__(self, u1, u2, u3):
-        self.boundary = [u1, u2, u3]
-        #self.print()
-        # Error handling
-        if len(self.boundary) != 3:
-            raise ValueError("Boundary conditions must have three components.")
-        elif not all(isinstance(val, bool) for val in self.boundary):
-            raise ValueError("All boundary values must be boolean.")
+    def __init__(self, fix_x=False, fix_y=False, fix_z=False):
+        """
+        Initializes constraint for x, y, z directions.
+        True = constrained (fixed)
+        False = free
+        """
+        self.fixed = [fix_x, fix_y, fix_z]
     
     def get_values(self):
-        return self.boundary
+        return self.fixed
 
     def print(self):
         """
         Print the boundary conditions.
         """
-        for i, val in enumerate([self.u1, self.u2, self.u3], start=1):
+        for i, val in enumerate(self.fixed, start=1):
             status = "fixed" if val else "free"
             print(f"Direction {i}: {status}")
         
