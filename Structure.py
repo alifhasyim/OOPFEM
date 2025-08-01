@@ -1,5 +1,7 @@
 from Node import Node
 from Element import Element
+import numpy as np
+import pandas as pd
 
 class Structure:
     def __init__(self):
@@ -33,7 +35,8 @@ class Structure:
         """
         Get the number of nodes in the structure.
         """
-        return len(self.nodes)
+        self.num_nodes = len(self.nodes)
+        return self.num_nodes
 
     def get_number_of_elements(self):
         """
@@ -69,7 +72,9 @@ class Structure:
         print("Solving structure...")
         # Implement the solving logic here
         # This could involve assembling global stiffness matrices, applying boundary conditions, etc.
-        pass
+        self.displacement = np.linalg.inv(self.K_global) @ self.f_global
+        print("Nodal displacements:")
+        print(self.displacement)
 
     def enumerate_dof(self):
         """
@@ -78,6 +83,7 @@ class Structure:
         counter = 0
         for node in self.nodes:
             counter = node.enumerate_dof(counter)
+        self.num_dof = counter
 
     def assemble_stiffness_matrix(self):
         """
@@ -87,7 +93,28 @@ class Structure:
         print("Assembling global stiffness matrix...")
         # Implement the assembly logic here
         # This could involve iterating over elements and nodes to build the global stiffness matrix
-        pass
+        # Step 1: Enumerate DOFs
+        self.enumerate_dof()
+
+        # Step 2: Initialize global stiffness matrix
+        n = self.num_dof
+        self.K_global = np.zeros((n, n))
+        
+        # Step 3: Loop over elements and assemble
+        for element in self.elements:
+            k_local = element.compute_stiffness_matrix()  # 6x6
+            dof_map = element.node1.dof_number + element.node2.dof_number  # length 6
+
+            for i_local, i_global in enumerate(dof_map):
+                if i_global == -1:
+                    continue  # constrained DOF
+
+                for j_local, j_global in enumerate(dof_map):
+                    if j_global == -1:
+                        continue
+                    self.K_global[i_global, j_global] += k_local[i_local, j_local]
+        df = pd.DataFrame(self.K_global)
+        print(df)
 
     def assemble_load_vector(self):
         """
@@ -97,7 +124,21 @@ class Structure:
         print("Assembling global load vector...")
         # Implement the assembly logic here
         # This could involve summing forces from all nodes into a global load vector
-        pass
+        self.enumerate_dof()
+        
+        n = self.num_dof
+        self.f_global = np.zeros((n, 1))
+        
+        for element in self.elements:
+            f_local = element.compute_force()
+            dof_map = element.node1.dof_number + element.node2.dof_number
+            
+            for k_local, k_global in enumerate(dof_map):
+                if k_global == -1:
+                    continue
+                self.f_global[k_global] += f_local[k_local]
+        df = pd.DataFrame(self.f_global)
+        print(df)
 
     def select_displacement(self, node_index):
         """

@@ -57,6 +57,17 @@ for i, element in enumerate([element1, element2, element3, element4, element5, e
     print(f"Element {i} stiffness matrix:")
     element.print_stiffness_matrix()
 
+# Compute force vector
+element1.compute_force()
+
+# Assemble stiffness matrix
+struct.assemble_stiffness_matrix()
+
+# Assemble load vector matrix
+struct.assemble_load_vector()
+
+# Solve the Matrix problem
+struct.solve()
 
 ## Visualize element
 vis = Visualizer([element1, element2, element3, element4, element5, element6])

@@ -10,12 +10,14 @@ class Element:
         # Material properties
         self.area = area
         self.e_modulus = e_modulus
-        #self.print_properties()
+        #self.print_propwhereerties()
         
         # Set nodes
         self.node1 = node1
         self.node2 = node2
         #self.print_nodes()
+        
+        
     
     def __str__(self):
         return f"Element(area={self.area}, e_modulus={self.e_modulus}, node1={self.node1}, node2={self.node2})"
@@ -51,23 +53,32 @@ class Element:
 
         K = scale * outer  # 3x3 local stiffness
 
-        k_global = np.block([
+        k_local = np.block([
             [ K, -K],
             [-K,  K]
         ])
 
-        self.stiffness_matrix = k_global
-        return k_global
+        self.stiffness_matrix = k_local
+        return k_local
     
     def enumerate_dof(self):
         """
         Calculate the whole degrees of freedom for the element.
         """
+        return self.node1.dof_number + self.node2.dof_number
     
     def compute_force(self):
         """"
         Compute the force vector for the element.
         """
+        # Get the force from 
+        f1 = np.array(self.node1.get_force()).reshape(-1, 1)
+        f2 = np.array(self.node2.get_force()).reshape(-1, 1)
+        
+        f_local = np.block([[f1], [f2]])
+        
+        self.force_vector = f_local
+        return f_local
 
     def get_modulus(self):
         """

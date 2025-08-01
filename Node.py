@@ -32,7 +32,7 @@ class Node():
         """
         Get the force vector associated with the node"
         """
-        return self.force
+        return self.force.get_values()
 
     def set_constraint(self, boundary_conditions: Constraint):
         """

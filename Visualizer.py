@@ -50,7 +50,7 @@ class Visualizer:
             for node in nodes:
                 position = np.array(node.get_position())
                 force_raw = node.get_force()
-                force = np.array(force_raw.get_values())
+                force = np.array(force_raw)
 
                 if np.allclose(force, [0, 0, 0]):
                     None
