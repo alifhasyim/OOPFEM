@@ -89,6 +89,8 @@ class Structure:
         # Solve reduced system
         u_f = np.linalg.solve(K_ff, f_f)
 
+        self.U_global = u_f
+
         # Fill full displacement vector with zeros initially
         full_disp = np.zeros((len(self.f_global), 1))
 

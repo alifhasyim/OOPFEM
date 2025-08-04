@@ -124,6 +124,88 @@ class Element:
         print("Element Properties:")
         print(f"Area: {self.area}")
         print(f"Elastic Modulus: {self.e_modulus}")
+    
+    def transformation_matrix(self):
+        """
+        Compute the 6x6 transformation matrix for a 3D truss element.
+        Maps global coordinates to local coordinates (x' along the element axis).
+        """
+        # Get node coordinates
+        x1, y1, z1 = self.node1.position
+        x2, y2, z2 = self.node2.position
+
+        # Element direction vector
+        dx = x2 - x1
+        dy = y2 - y1
+        dz = z2 - z1
+        L = np.sqrt(dx**2 + dy**2 + dz**2)
+        
+        if L == 0:
+            raise ValueError("Element has zero length")
+
+        # Direction cosines
+        l = dx / L
+        m = dy / L
+        n = dz / L
+
+        # Construct transformation matrix
+        T = np.zeros((6, 6))
+        
+        # Fill 3x3 rotation block (for each node)
+        T_local = np.array([
+            [l, m, n],
+            [0, 0, 0],
+            [0, 0, 0]
+        ])  # Only the axial direction matters in truss
+
+        T[0:3, 0:3] = np.array([
+            [l, m, n],
+            [0, 0, 0],
+            [0, 0, 0]
+        ])
+        T[3:6, 3:6] = T[0:3, 0:3]  # Same rotation for node2
+
+        # But to be correct in general, use identity for full transformation along element axis
+        direction_cosines = np.array([l, m, n])
+        R = np.zeros((3, 6))
+        R[0, 0:3] = direction_cosines
+        R[1, 3:6] = -direction_cosines
+
+        # Full transformation matrix for axial deformation:
+        # T = [ l m n  0 0 0
+        #       0 0 0  l m n ]
+        T = np.zeros((6, 6))
+        T[0:3, 0:3] = np.eye(3)
+        T[3:6, 3:6] = np.eye(3)
+
+        return T
+        
+    
+    def compute_internal_force(self, U_global):
+        """
+        Compute internal force vector in local coordinates.
+        """
+        # Get DOF mapping
+        dof_map = self.node1.dof_number + self.node2.dof_number  # 6 DOFs
+
+        # Extract global displacement vector for this element
+        u_global = np.zeros(6)
+        for i, dof in enumerate(dof_map):
+            if dof != -1:
+                u_global[i] = U_global[dof]
+
+        # Transform to local coordinate system
+        T = self.transformation_matrix()  # 6x6
+        u_local = T @ u_global
+
+        # Compute local stiffness matrix
+        k_local = self.compute_stiffness_matrix()  # 6x6 in local coords
+
+        # Compute internal force vector (in local coords)
+        f_local = k_local @ u_local
+        return f_local
+    
+    
 
     def print_nodes(self):
         """

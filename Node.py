@@ -12,7 +12,7 @@ class Node():
         self.displacement = [0, 0, 0]
         self.constraint = Constraint(False, False, False)
         self.force = Force(0, 0, 0)
-        self.dof_number = [0, 0, 0]
+        self.dof_number = [-1, -1, -1]
         # Print the node's coordinates
         #self.print()
   
