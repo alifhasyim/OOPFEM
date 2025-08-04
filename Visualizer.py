@@ -73,7 +73,7 @@ class Visualizer:
                                      scale=0.5)
                     plotter.add_mesh(arrow, color='yellow')
                     
-    def draw_displacement(self, plotter, displacement):
+    def post_processing(self, plotter, displacement):
         
         forces = []
         line_all = []
