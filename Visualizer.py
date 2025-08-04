@@ -73,7 +73,10 @@ class Visualizer:
                                      scale=0.5)
                     plotter.add_mesh(arrow, color='yellow')
                     
-    def draw_displacement(self, plotter):
+    def draw_displacement(self, plotter, displacement):
+        
+        forces = []
+        line_all = []
         
         for element in self.element:
             nodes = element.get_nodes()
@@ -87,13 +90,37 @@ class Visualizer:
             pos0_def = pos0 + self.scale * disp0
             pos1_def = pos1 + self.scale * disp1
 
-            # Original
-            plotter.add_mesh(pv.Line(pos0, pos1), color='gray', line_width=2, label="Original")
+            # Compute force
+            f_local = element.compute_internal_force(displacement)
+            f_axial = f_local # Axial force
+            forces.append(f_axial)
+            
+            ## Original
+            #plotter.add_mesh(pv.Line(pos0, pos1), color='gray', line_width=2, label="Original")
 
             # Deformed
-            plotter.add_mesh(pv.Line(pos0_def, pos1_def), color='red', line_width=4, label="Deformed")
+            line_individual = pv.Line(pos0_def, pos1_def)
+            line_all.append(line_individual)
     
-        plotter.add_legend()
+            #plotter.add_mesh(pv.Line(pos0_def, pos1_def), color='red', line_width=4, label="Deformed")
+        
+        # Combine all line into one mesh
+        multi_block = pv.MultiBlock(line_all)
+        combined = multi_block.combine()
+        
+        # Assign axial forces as scalar values
+        force_array = np.array(forces)
+        combined["AxialForce"] = np.repeat(force_array, len(combined.points) // len(forces))
+        
+        plotter.add_mesh(
+            combined,
+            scalars="AxialForce",
+            line_width=10, 
+            cmap="jet",  
+            show_scalar_bar=True,
+            scalar_bar_args={"title": "Axial Force"},
+            lighting=False,
+        )
     
     def draw_axial_forces(self, plotter, displacement):
         """
