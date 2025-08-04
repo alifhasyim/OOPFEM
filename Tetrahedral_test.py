@@ -17,7 +17,7 @@ e = 2.1e11
 
 # Constraint
 c1 = Constraint(True, True, True)
-c2 = Constraint(False, False, False)
+c2 = Constraint(False, False, True)
 
 # Set up force
 f1 = Force(0, -20e3, -100e3)
@@ -31,10 +31,9 @@ n4 = struct.add_node(lb/2, -lb/mat.sqrt(12.0), 0)
 
 ## Apply BCs
 n1.set_force(f1)
-n1.set_constraint(Constraint(True, True, False))
 n2.set_constraint(Constraint(True, True, True))  # fixed
 n3.set_constraint(Constraint(True, True, True))  # fixed
-n4.set_constraint(Constraint(True, True, True))  # fixed again, new instance
+n4.set_constraint(Constraint(False, False, True))  # fixed again, new instance
 
 ## Create elements
 element1 = struct.add_element(e, a, n1, n2)

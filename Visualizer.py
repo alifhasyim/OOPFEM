@@ -110,7 +110,7 @@ class Visualizer:
 
             # Compute force
             f_local = elem.compute_internal_force(displacement)
-            f_axial = f_local[0]  # Axial force
+            f_axial = f_local # Axial force
             forces.append(f_axial)
 
             # Compute the direction vector of the element
