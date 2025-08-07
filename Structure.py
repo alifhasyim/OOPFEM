@@ -76,6 +76,54 @@ class Structure:
         """
         print("Solving structure...")
         
+        # enumerate dof
+        self.enumerate_dof()
+        
+        # Initialize stiffness matrix, mass matrix, and force vector
+        n = self.num_dof
+        if self.num_dof == 0:
+            raise ValueError("DOF enumeration must be run before assembling stiffness matrix.")
+        
+        self.K_global = np.zeros((n, n))
+        self.m_global = np.zeros((n, n))
+        self.f_global = np.zeros((n, 1))
+        
+        # Loop for stiffness matrix
+        for element in self.elements:
+            k_local = element.compute_stiffness_matrix()  # 6x6
+            dof_map = element.node1.dof_number + element.node2.dof_number  # length 6
+
+            for i_local, i_global in enumerate(dof_map):
+                if i_global == -1:
+                    continue  # constrained DOF
+
+                for j_local, j_global in enumerate(dof_map):
+                    if j_global == -1:
+                        continue
+                    self.K_global[i_global, j_global] += k_local[i_local, j_local]
+        
+        # Loop for mass matrix
+        for element in self.elements:
+            m_local = element.compute_mass_matrix()  # 6x6
+            dof_map = element.node1.dof_number + element.node2.dof_number  # length 6
+
+            for i_local, i_global in enumerate(dof_map):
+                if i_global == -1:
+                    continue  # constrained DOF
+
+                for j_local, j_global in enumerate(dof_map):
+                    if j_global == -1:
+                        continue
+                    self.m_global[i_global, j_global] += m_local[i_local, j_local]
+        
+        # Loop for force vector
+        for node in self.nodes:
+            if node.force is None:
+                continue
+            for i, dof in enumerate(node.dof_number):
+                if dof != -1:
+                    self.f_global[dof] += node.force[i]
+        
         # Identify free DOF indices
         free_dofs = []
         for node in self._node_set:
