@@ -89,7 +89,6 @@ class Visualizer:
 
             pos0_def = pos0 + self.scale * disp0
             pos1_def = pos1 + self.scale * disp1
-
             # Compute force
             f_local = element.compute_internal_force(displacement)
             f_axial = f_local # Axial force

@@ -11,6 +11,7 @@ class Structure:
         self.nodes = []
         self.elements = []
         self._node_set = set()
+        
 
     def __str__(self):
         return f"Structure with {len(self.nodes)} nodes and {len(self.elements)} elements."
@@ -26,11 +27,11 @@ class Structure:
         return single_nodal
         
     
-    def add_element(self, area, e_modulus, node1, node2):
+    def add_element(self, e_modulus, area, density, node1, node2):
         """
         Add an element to the structure.
         """
-        single_element = Element(area, e_modulus, node1, node2)
+        single_element = Element(e_modulus, area, density, node1, node2)
         self.elements.append(single_element)
         self._node_set.add(node1)
         self._node_set.add(node2)
@@ -74,7 +75,7 @@ class Structure:
         Solve the reduced system only for free DOFs.
         """
         print("Solving structure...")
-
+        
         # Identify free DOF indices
         free_dofs = []
         for node in self._node_set:
@@ -163,9 +164,43 @@ class Structure:
                     if j_global == -1:
                         continue
                     self.K_global[i_global, j_global] += k_local[i_local, j_local]
+        print("My stiffness matrix:")
         df = pd.DataFrame(self.K_global)
         print(df)
+        return self.K_global
 
+    def assemble_mass_matrix(self):
+        """
+        Assembly the global mass matrix, which here are quite the same as the stiffness matrix
+        assembly.
+        """
+        # Step 1: Enumerate dof
+        self.enumerate_dof()
+        # Step 2: Initialize global mass matrix
+        n = self.num_dof
+        self.m_global = np.zeros((n, n))
+        if self.num_dof == 0:
+            raise ValueError("DOF enumeration must be run before assembling stiffness matrix.")
+        
+        # Step 3: Loop over elements and assemble
+        for element in self.elements:
+            m_local = element.compute_mass_matrix()  # 6x6
+            dof_map = element.node1.dof_number + element.node2.dof_number  # length 6
+
+            for i_local, i_global in enumerate(dof_map):
+                if i_global == -1:
+                    continue  # constrained DOF
+
+                for j_local, j_global in enumerate(dof_map):
+                    if j_global == -1:
+                        continue
+                    self.m_global[i_global, j_global] += m_local[i_local, j_local]
+        print("My mass matrix:")
+        df = pd.DataFrame(self.m_global)
+        print(df)
+        
+        return self.assemble_mass_matrix
+    
     def assemble_load_vector(self):
         """
         Assemble the global load vector for the structure.
@@ -183,9 +218,11 @@ class Structure:
             for i, dof in enumerate(node.dof_number):
                 if dof != -1:
                     self.f_global[dof] += node.force[i]
-
+        print("My load vector:")
         df = pd.DataFrame(self.f_global)
         print(df)
+        
+        return self.assemble_load_vector
         
 
     def select_displacement(self, node_index):

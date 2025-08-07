@@ -14,6 +14,8 @@ e_modulus = 2.1e11
 # Area
 r = 0.01
 area = mat.pi * mat.pow(r, 2)
+# Density
+density = 1000
 
 ## Constraint
 c1 = Constraint(True, True, True)
@@ -46,26 +48,27 @@ n6.set_constraint(c_2D)
 
 
 ## Create elements
-element1 = struct.add_element(e_modulus, area, n1, n2)
-element2 = struct.add_element(e_modulus, area, n1, n3)
-element3 = struct.add_element(e_modulus, area, n2, n3)
-element4 = struct.add_element(e_modulus, area, n2, n4)
-element5 = struct.add_element(e_modulus, area, n3, n4)
-element6 = struct.add_element(e_modulus, area, n3, n5)
-element7 = struct.add_element(e_modulus, area, n4, n5)
-element8 = struct.add_element(e_modulus, area, n4, n6)
-element9 = struct.add_element(e_modulus, area, n5, n6)
-element10 = struct.add_element(e_modulus, area, n5, n7)
-element11 = struct.add_element(e_modulus, area, n6, n7)
+element1 = struct.add_element(e_modulus, area, density, n1, n2)
+element2 = struct.add_element(e_modulus, area, density, n1, n3)
+element3 = struct.add_element(e_modulus, area, density, n2, n3)
+element4 = struct.add_element(e_modulus, area, density, n2, n4)
+element5 = struct.add_element(e_modulus, area, density, n3, n4)
+element6 = struct.add_element(e_modulus, area, density, n3, n5)
+element7 = struct.add_element(e_modulus, area, density, n4, n5)
+element8 = struct.add_element(e_modulus, area, density, n4, n6)
+element9 = struct.add_element(e_modulus, area, density, n5, n6)
+element10 = struct.add_element(e_modulus, area, density, n5, n7)
+element11 = struct.add_element(e_modulus, area, density, n6, n7)
 
 for i, node in enumerate(struct.nodes):
     print(f"Node {i+1} constraint.fixed = {node.constraint.fixed}")
 ## Enumerate DOF (must happen before printing them)
-struct.enumerate_dof()
-
+#struct.enumerate_dof()
+print("Try to compute the mass matrix of element1")
+#m1 = element1.compute_mass_matrix()
 ## Now safe to print
-for i, node in enumerate(struct.nodes):
-    print(f"Node {i+1} DOF numbers: {node.dof_number}")
+#for i, node in enumerate(struct.nodes):
+    #print(f"Node {i+1} DOF numbers: {node.dof_number}")
     
 # Compute Stiffness matrix 
 # for i, element in enumerate([element1, element2, element3, element4, element5, element6, 
@@ -82,6 +85,9 @@ struct.assemble_stiffness_matrix()
 
 # Assemble load vector matrix
 struct.assemble_load_vector()
+
+# Assemble mass matrix
+struct.assemble_mass_matrix()
 
 # Solve the Matrix problem
 struct.solve()

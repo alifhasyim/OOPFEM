@@ -3,12 +3,13 @@ import pandas as pd
 import numpy as np
 class Element:
     
-    def __init__(self, area, e_modulus, node1, node2):
+    def __init__(self, e_modulus, area, density, node1, node2):
         """
         Initialize an Element object with two nodes.
         """
         # Material properties
         self.area = area
+        self.density = density
         self.e_modulus = e_modulus
         #self.print_propwhereerties()
         
@@ -60,6 +61,41 @@ class Element:
 
         self.stiffness_matrix = k_local
         return k_local
+    
+    def compute_mass_matrix(self):
+        """
+        Compute the 6x6 mass matrix using information from the nodes
+        """
+        x1 = np.array(self.node1.get_position())
+        x2 = np.array(self.node2.get_position())
+        
+        # Element length
+        L_vec = x2 - x1
+        L = np.linalg.norm(L_vec)
+        
+        # Scale factor
+        scale = L  * self.density * self.area / 6
+        
+        # Construct the local mass matrix for linear element
+        m11 = scale * 2
+        m12 = scale
+        m21 = m12
+        m22 = m11
+        
+        m = np.block([
+            [m11, m12],
+            [m21, m22]
+        ])
+        
+        # Transform the local to global m matrix
+        T = self.transformation_matrix()
+        m_local = np.transpose(T) @ m @ T
+        
+        self.mass_matrix = m_local
+        df = pd.DataFrame(m_local)
+        print(df)
+        return m_local 
+    
     
     def enumerate_dof(self):
         """
