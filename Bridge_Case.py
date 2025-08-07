@@ -81,13 +81,13 @@ print("Try to compute the mass matrix of element1")
 #element1.compute_force()
 
 # Assemble stiffness matrix
-struct.assemble_stiffness_matrix()
+# struct.assemble_stiffness_matrix()
 
 # Assemble load vector matrix
-struct.assemble_load_vector()
+# struct.assemble_load_vector()
 
 # Assemble mass matrix
-struct.assemble_mass_matrix()
+# struct.assemble_mass_matrix()
 
 # Solve the Matrix problem
 struct.solve()
