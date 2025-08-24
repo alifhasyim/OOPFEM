@@ -2,6 +2,7 @@ from Visualizer import Visualizer
 from Structure import Structure
 from Constraint import Constraint
 from Force import Force
+from Dynamic import Dynamic
 
 import pyvista as pv
 import math as mat
@@ -91,6 +92,8 @@ print("Try to compute the mass matrix of element1")
 
 # Solve the Matrix problem
 struct.solve()
+
+# Solve the Dynamic problem
 
 ## Visualize element
 vis = Visualizer([element1, element2, element3, element4, element5, element6, 

@@ -282,7 +282,18 @@ class Structure:
             return self.nodes[node_index].displacement
         else:
             raise IndexError("Node index out of range.")
-        
+    
+    def initial_displacement(self):
+        """
+        Get the initial displacement vector for the structure.
+        """
+        return np.zeros((self.num_dof, 1))
+
+    def initial_velocity(self):
+        """
+        Get the initial velocity vector for the structure.
+        """
+        return np.zeros((self.num_dof, 1))
 
     def print_results(self):
         """

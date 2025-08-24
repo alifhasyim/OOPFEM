@@ -1,0 +1,180 @@
+from Structure import Structure
+import numpy as np
+import matplotlib.pyplot as plt
+
+class generalized_alpha:
+    def __init__(self, initial_step, initial_time, 
+                 final_time,
+                 alpha_1, alpha_2, rho):
+        """_summary_
+
+        Args:
+            initial_step (_type_): Initial step size
+            initial_time (_type_): Initial time step
+            final_time (_type_): Final time step
+            alpha_1 (_type_): First alpha parameter
+            alpha_2 (_type_): Second alpha parameter
+            rho (_type_): Rho parameter
+        """
+        # Initialize the generalized alpha method parameters
+        self.initial_step = initial_step
+        self.initial_time = initial_time
+        self.final_time = final_time
+        self.alpha_1 = alpha_1
+        self.alpha_2 = alpha_2
+        self.rho = rho
+        # Initialize the algorithm
+    
+    def get_stiffness_matrix(self, structure: Structure):
+        """
+        Calculate the stiffness matrix for the structure.
+        
+        Args:
+            structure (Structure): The structure for which to calculate the stiffness matrix.
+        
+        Returns:
+            np.ndarray: The stiffness matrix.
+        """
+        # Placeholder for stiffness matrix calculation
+        # This should be replaced with actual implementation
+        pass
+    
+    def get_mass_matrix(self, structure: Structure):
+        """
+        Calculate the mass matrix for the structure.
+        
+        Args:
+            structure (Structure): The structure for which to calculate the mass matrix.
+        
+        Returns:
+            np.ndarray: The mass matrix.
+        """
+        # Placeholder for mass matrix calculation
+        # This should be replaced with actual implementation
+        pass
+    
+    def generalized_alpha(self):
+        """
+        Run the generalized alpha algorithm.
+        """
+        ## Time stepping parameters
+        dt = self.initial_step
+        t = self.initial_time
+        t_end = self.final_time
+        
+        ## Dynamic response parameters
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        p = self.rho
+        
+        ## Allowable error boundaries
+        v1 = 1
+        v2 = 10
+        ne = 10**(-3)
+        
+        ## Construct the stiffness, mass matrix, rayleigh damping, and external forces
+        M = Structure.assemble_mass_matrix()
+        K = Structure.assemble_stiffness_matrix()
+        C = alpha_1 * M + alpha_2 * K
+        R = Structure.assemble_load_vector()
+        
+        ## Define the Newmark family parameters (Chung and Hulbert (1993))
+        alpha_m = (2*p - 1)/(p + 1);            #a_m
+        alpha_f = p/(p + 1);                    #a_f
+        B = 1/4 * (1 - alpha_m + alpha_f)**2;   #Beta 
+        G = 1/2 - alpha_m + alpha_f;            #Gamma
+        
+        ## Define initial Conditions
+        # Data containers
+        u = np.zeros((Structure.enumerate_dof(), 1))
+        v = np.zeros((Structure.enumerate_dof(), 1))
+        a = np.zeros((Structure.enumerate_dof(), 1))
+        # Motion
+        u[:,0] = Structure.initial_displacement()
+        v[:,0] = Structure.initial_velocity()
+        a[:,0] = np.linalg.inv(M) @ (R - C @ v[:,0] - K @ u[:,0])
+        # Force component
+        r_eff = np.zeros((Structure.enumerate_dof(), 1))
+
+        ## Define error for adaptive time step calculation
+        e = np.zeros((Structure.enumerate_dof(), 1))
+        et = []
+        cet = []
+     
+        ## Loop
+        i = 1
+        while t < t_end:
+            # Effective stiffness matrix calculation
+            Km = (1-alpha_m)/(B*dt**2);                     #component Keff
+            Kc = G * (1-alpha_f)/(B*dt);                    #component Keff
+            Kk = (1-alpha_f);                               #component Keff
+            Keff = M * Km + C * Kc + K * Kk;                #main equation
+            
+            # Effective load vector calculation
+            rk = alpha_f * u[:,i]                           #sub equation r_eff
+            rcu = G * (1 - alpha_f)/(B * dt)                #component rc
+            rcv = (G - G*alpha_f - B)/(B)                   #component rc
+            rca = (G - 2*B) * (1 - alpha_f)/(2 * B) * dt    #component rc
+            rc = rcu * u[:,i] + rcv * v[:,i] + rca * a[:,i] #sub equation r_eff
+            rmu = (1 - alpha_m)/(B * dt**2)                 #component rm
+            rmv = (1 - alpha_m)/(B * dt)                    #component rm
+            rma = (1 - alpha_m - 2 * B)/(2 * B)             #component rm
+            rm = rmu * u[:,i] + rmv * v[:,i] + rma * a[:,i] #sub equation r_eff
+            r_eff[:, i+1] = R - K * rk + C * rc  + M * rm   #main equation
+            
+            #dynamic response evolution
+            u[:, i+1] = np.linalg.solve(Keff, r_eff[:, i+1])                                                               # Updated Displacement
+            v[:, i+1] = G/(B*dt) * (u[:, i+1] - u[:,i]) - (G - B)/B * v[:,i] - (G - 2*B)/(2*B) * dt * a[:,i]            # Updated Velocity
+            a[:, i+1] = 1/(B*dt**2) * (u[:, i+1] - u[:,i]) - 1/(B*dt) * v[:,i] - (1 - 2*B)/(2*B) * a[:,i]              # Updated Acceleration
+            
+            #define Error by Zienkiewicz & Xie (1991)
+            e[:,i]= (6*B - 1)/6 * (a[:, i+1] - a[:,i]) * dt**2                       #updated error vector
+            et[i] = np.linalg.norm(e[:,i])/np.linalg.norm(u[:, i+1]-u[:,i])          #updated relative error
+            cet[i+1]= cet[i] + np.linalg.norm(e[:,i])
+            
+            #adaptive time stepping loop
+            if et(i) > v2*ne and et(i) < v1*ne   #update time step when error exceeds upper or lower boundaries
+                dt = dt*np.sqrt(ne/et(i))
+
+            t = t + dt;      #add the new time step to the time frame
+            i = i + 1;       #new iteration
+            dtn = [dtn, dt]; #store the time step evolution
+            tn = [tn, t];    #store the time frame
+        # Store the data
+        self.time_history = tn
+        self.displacement_history = u
+        self.velocity_history = v
+        self.acceleration_history = a
+        self.error_history = et
+        self.cumulative_error_history = cet
+        return
+
+    def plot_results(self):
+        plt.figure(figsize=(12, 8))
+
+        plt.subplot(3, 1, 1)
+        plt.plot(self.time_history, self.displacement_history, label='Displacement')
+        plt.title('Displacement History')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Displacement [m]')
+        plt.grid()
+        plt.legend()
+
+        plt.subplot(3, 1, 2)
+        plt.plot(self.time_history, self.velocity_history, label='Velocity', color='orange')
+        plt.title('Velocity History')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Velocity [m/s]')
+        plt.grid()
+        plt.legend()
+
+        plt.subplot(3, 1, 3)
+        plt.plot(self.time_history, self.acceleration_history, label='Acceleration', color='green')
+        plt.title('Acceleration History')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Acceleration [m/s²]')
+        plt.grid()
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
