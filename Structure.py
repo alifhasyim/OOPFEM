@@ -247,7 +247,7 @@ class Structure:
         df = pd.DataFrame(self.m_global)
         print(df)
         
-        return self.assemble_mass_matrix
+        return self.m_global
     
     def assemble_load_vector(self):
         """
@@ -270,7 +270,7 @@ class Structure:
         df = pd.DataFrame(self.f_global)
         print(df)
         
-        return self.assemble_load_vector
+        return self.f_global
         
 
     def select_displacement(self, node_index):

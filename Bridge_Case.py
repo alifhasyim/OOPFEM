@@ -2,12 +2,14 @@ from Visualizer import Visualizer
 from Structure import Structure
 from Constraint import Constraint
 from Force import Force
-from Dynamic import Dynamic
+from Dynamic import dynamic
 
 import pyvista as pv
 import math as mat
-
+import webbrowser
+from PIL import Image
 struct = Structure()
+
 
 ## Properties information
 # Young's modulus
@@ -94,6 +96,13 @@ print("Try to compute the mass matrix of element1")
 struct.solve()
 
 # Solve the Dynamic problem
+dynna = dynamic(struct)
+# Run generalized-alpha method
+dynna.generalized_alpha(initial_step=0.01, initial_time=0.0, final_time=10.0,
+                        alpha_1=0.05, alpha_2=0.4, rho=0.95)
+# Plot results
+dynna.plot_results(dof_index=0)
+dynna.plot_results_all()
 
 ## Visualize element
 vis = Visualizer([element1, element2, element3, element4, element5, element6, 
@@ -103,6 +112,23 @@ vis.draw_elements(plotter)
 vis.draw_constraint(plotter)
 vis.draw_nodal_forces(plotter)
 vis.post_processing(plotter, struct.displacement)
-plotter.view_isometric()
-plotter.show_axes()
-plotter.show()
+# 2. Open window and keep it alive
+plotter.show(auto_close=False)  # window stays open
+
+# 3. Start recording
+plotter.open_gif("gifs/deformation.gif")
+# 4. Animate and record
+vis.animate_displacement(plotter, dynna.u, dynna.time)
+
+# 5. Stop recording (finalize GIF)
+plotter.close()
+
+# 6. Open the saved GIF in your default viewer
+#Image.open("deformation.gif").show()
+
+# 7. Keep interactive control in the live window
+#plotter.app.process_events()
+#plotter.interactor.start()
+#plotter.view_isometric()
+#plotter.show_axes()
+#plotter.show()
