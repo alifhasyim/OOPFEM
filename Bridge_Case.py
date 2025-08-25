@@ -9,6 +9,7 @@ import math as mat
 import webbrowser
 from PIL import Image
 struct = Structure()
+import os 
 
 
 ## Properties information
@@ -98,8 +99,8 @@ struct.solve()
 # Solve the Dynamic problem
 dynna = dynamic(struct)
 # Run generalized-alpha method
-dynna.generalized_alpha(initial_step=0.01, initial_time=0.0, final_time=10.0,
-                        alpha_1=0.05, alpha_2=0.4, rho=0.95)
+dynna.generalized_alpha(initial_step=0.001, initial_time=0.0, final_time=3,
+                        alpha_1=0.1 , alpha_2=0.000000001, rho=0.7)
 # Plot results
 dynna.plot_results(dof_index=0)
 dynna.plot_results_all()
@@ -107,28 +108,38 @@ dynna.plot_results_all()
 ## Visualize element
 vis = Visualizer([element1, element2, element3, element4, element5, element6, 
                             element7, element8, element9, element10, element11])
-plotter = pv.Plotter()
-vis.draw_elements(plotter)
-vis.draw_constraint(plotter)
-vis.draw_nodal_forces(plotter)
-vis.post_processing(plotter, struct.displacement)
-# 2. Open window and keep it alive
-plotter.show(auto_close=False)  # window stays open
+## --- Static visualization ---
+plotter_static = pv.Plotter()
+vis.draw_elements(plotter_static)
+vis.draw_constraint(plotter_static)
+vis.draw_nodal_forces(plotter_static)
+vis.post_processing(plotter_static, struct.displacement)
 
-# 3. Start recording
-plotter.open_gif("gifs/deformation.gif")
-# 4. Animate and record
-vis.animate_displacement(plotter, dynna.u, dynna.time)
+# Just show the static visualization (blocking=True by default)
+plotter_static.show()   # when you close this window, it won't affect the GIF one
 
-# 5. Stop recording (finalize GIF)
-plotter.close()
+## --- Dynamic visualization (record GIF) ---
+plotter_dyn = pv.Plotter()
 
-# 6. Open the saved GIF in your default viewer
-#Image.open("deformation.gif").show()
+# Start recording
+gif_path = "gifs/deformation.gif"
+os.makedirs("gifs", exist_ok=True)
+plotter_dyn.open_gif(gif_path)
+
+# Show once in non-blocking mode
+plotter_dyn.show(interactive_update=True)
+plotter_dyn.view_isometric()
+# Animate (this must call write_frame each step)
+vis.animate_displacement(plotter_dyn, dynna.u, dynna.time)
+
+# Finalize
+plotter_dyn.close()
+
+# Optional: open saved GIF
+Image.open(gif_path).show()
 
 # 7. Keep interactive control in the live window
-#plotter.app.process_events()
-#plotter.interactor.start()
-#plotter.view_isometric()
-#plotter.show_axes()
-#plotter.show()
+
+plotter_dyn.view_isometric()
+plotter_dyn.show_axes()
+plotter_dyn.show()

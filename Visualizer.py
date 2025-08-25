@@ -184,7 +184,9 @@ class Visualizer:
             scalar_bar_args={"title": "Axial Force"},
             lighting=False,
         )
-        
+    
+    
+     
     def animate_displacement(self, plotter, displacement_history, time_history):
         """
         Visualise displacement evolution over time.
@@ -198,16 +200,36 @@ class Visualizer:
         time_history : np.ndarray
             Array of simulation time stamps of length n_steps.
         """
+        
+        def apply_displacement(pos, disp, scale=0.05):
+            """
+            Safely add displacement to a node position, padding zeros if necessary.
+            
+            Parameters
+            ----------
+            pos : np.ndarray
+                Node coordinates (size 2 or 3)
+            disp : np.ndarray
+                Node displacement (may be smaller than pos)
+            scale : float
+                Scaling factor for visualization
+            """
+            disp_full = np.zeros_like(pos)  # create zero vector same size as pos
+            if disp.size > 0:
+                disp_full[:len(disp)] = disp
+            return pos + scale * disp_full
+        
         num_steps = displacement_history.shape[1]
 
-        # --- STEP 1: Create an initial combined mesh (undeformed at t=0) ---
+        # --- STEP 1: Create initial MultiBlock mesh (undeformed at t=0) ---
         forces = []
-        line_all = []
+        multi_block = []
 
-        dof_counter = 0
         for node in self.nodes:
-            node.displacement = displacement_history[dof_counter:dof_counter+len(node.position), 0]
-            dof_counter += len(node.position)
+            node.displacement = np.array([
+                displacement_history[d, num_steps-1] if d != -1 else 0.0
+                for d in node.dof_number
+            ])
 
         for element in self.element:
             nodes = element.get_nodes()
@@ -216,18 +238,25 @@ class Visualizer:
             disp0 = np.array(nodes[0].displacement)
             disp1 = np.array(nodes[1].displacement)
 
-            pos0_def = pos0 + self.scale * disp0 if disp0.size == 3 else pos0
-            pos1_def = pos1 + self.scale * disp1 if disp1.size == 3 else pos1
+            disp0_full = np.zeros_like(pos0)
+            disp1_full = np.zeros_like(pos1)
+
+            # Fill in actual displacements (assuming disp0/disp1 might be smaller than 3)
+            disp0_full[:len(disp0)] = disp0
+            disp1_full[:len(disp1)] = disp1
+
+            pos0_def = pos0 + self.scale * disp0_full
+            pos1_def = pos1 + self.scale * disp1_full
 
             f_local = element.compute_internal_force(displacement_history[:, 0])
             forces.append(f_local)
 
-            line_all.append(pv.Line(pos0_def, pos1_def))
+            multi_block.append(pv.Line(pos0_def, pos1_def))
 
-        multi_block = pv.MultiBlock(line_all)
-        combined = multi_block.combine()
-        force_array = np.array(forces)
-        combined["AxialForce"] = np.repeat(force_array, len(combined.points) // len(forces))
+        multi_block_mesh = pv.MultiBlock(multi_block)
+        combined = multi_block_mesh.combine()
+        # Assign forces per element (2 points per element)
+        combined["AxialForce"] = np.array([f for f in forces for _ in range(2)])
 
         # --- STEP 2: Add mesh once and keep the reference ---
         actor = plotter.add_mesh(
@@ -239,46 +268,41 @@ class Visualizer:
             scalar_bar_args={"title": f"Axial Force | Time {time_history[0]:.4f} s"},
             lighting=False,
         )
-        # Grab a reference to the scalar bar actor (optional)
         scalar_bar_actor = plotter.scalar_bar
-        # --- STEP 3: Animation loop (update points & scalars without clearing) ---
+
+        # --- STEP 3: Animation loop ---
         for step in range(1, num_steps):
             forces = []
-            updated_points = []
 
-            dof_counter = 0
+            # Update node displacements
             for node in self.nodes:
-                node.displacement = displacement_history[dof_counter:dof_counter+len(node.position), step]
-                dof_counter += len(node.position)
+                node.displacement = np.array([
+                    displacement_history[d, step] if d != -1 else 0.0
+                    for d in node.dof_number
+                ])
 
-            for element in self.element:
+            # Update points in each element line
+            for i, element in enumerate(self.element):
                 nodes = element.get_nodes()
-                pos0 = np.array(nodes[0].position)
-                pos1 = np.array(nodes[1].position)
-                disp0 = np.array(nodes[0].displacement)
-                disp1 = np.array(nodes[1].displacement)
+                pos0_def = apply_displacement(np.array(nodes[0].position), np.array(nodes[0].displacement), self.scale)
+                pos1_def = apply_displacement(np.array(nodes[1].position), np.array(nodes[1].displacement), self.scale)
 
-                pos0_def = pos0 + self.scale * disp0 if disp0.size == 3 else pos0
-                pos1_def = pos1 + self.scale * disp1 if disp1.size == 3 else pos1
+                multi_block[i].points[:] = [pos0_def, pos1_def]
 
                 f_local = element.compute_internal_force(displacement_history[:, step])
                 forces.append(f_local)
 
-                updated_points.extend([pos0_def, pos1_def])
+            # Combine MultiBlock for scalar assignment
+            combined = multi_block_mesh.combine()
+            combined["AxialForce"] = np.array([f for f in forces for _ in range(2)])
 
-            # Update geometry in-place
-            combined.points = np.array(updated_points)
-            combined["AxialForce"] = np.repeat(np.array(forces),
-                                            len(combined.points) // len(forces))
+            # Update mesh and scalar range
+            actor.mapper.SetInputData(combined)
+            actor.mapper.scalar_range = (combined["AxialForce"].min(), combined["AxialForce"].max())
 
-            # Update range if forces vary over time
-            actor.mapper.scalar_range = (
-                combined["AxialForce"].min(),
-                combined["AxialForce"].max()
-            )
-
-            #  Just update the title — no new scalar bar
+            # Update scalar bar title
             if scalar_bar_actor:
                 scalar_bar_actor.SetTitle(f"Axial Force | Time {time_history[step]:.4f} s")
 
-            plotter.render()  # or plotter.update() for interactive mode
+            plotter.render()
+            plotter.write_frame()

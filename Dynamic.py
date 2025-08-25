@@ -5,15 +5,25 @@ import matplotlib.pyplot as plt
 class dynamic:
     def __init__(self, structure):
         """
-        Only stores the structure; solver parameters will be passed later.
+        Dynamic solver setup.
         """
         self.structure = structure
-        self.M = structure.assemble_mass_matrix()
-        self.K = structure.assemble_stiffness_matrix()
-        self.R = structure.assemble_load_vector()
-        self.dof = structure.enumerate_dof()
-        self.initial_displacement = structure.initial_displacement()
-        self.initial_velocity = structure.initial_velocity()    
+
+        # 1. Enumerate DOFs first so all assembly uses the same global numbering
+        self.structure.enumerate_dof()   # ensures node.dof_number[] is set
+
+        # 2. Assemble matrices with this DOF map
+        self.M = self.structure.assemble_mass_matrix()
+        self.K = self.structure.assemble_stiffness_matrix()
+        self.R = self.structure.assemble_load_vector()
+
+        # 3. Store DOF mapping info, not just a count
+        self.num_dof = self.structure.num_dof  # integer count
+        self.dof_map = [node.dof_number for node in self.structure.nodes]
+
+        # 4. Initial conditions
+        self.initial_displacement = self.structure.initial_displacement()
+        self.initial_velocity = self.structure.initial_velocity()
 
     def generalized_alpha(self, initial_step, initial_time, final_time,
                           alpha_1=0.0, alpha_2=0.0, rho=0.5):
@@ -28,7 +38,7 @@ class dynamic:
 
         # Allowable error boundaries
         v1 = 1
-        v2 = 10
+        v2 = 5
         ne = 1e-3
 
         # Construct matrices and force vector
@@ -49,11 +59,11 @@ class dynamic:
         n_steps = int(np.ceil((t_end - t) / dt)) + 1
 
         # Preallocate arrays
-        u = np.zeros((self.dof, n_steps))
-        v = np.zeros((self.dof, n_steps))
-        a = np.zeros((self.dof, n_steps))
-        r_eff = np.zeros((self.dof, n_steps))
-        e = np.zeros((self.dof, n_steps))
+        u = np.zeros((self.num_dof, n_steps))
+        v = np.zeros((self.num_dof, n_steps))
+        a = np.zeros((self.num_dof, n_steps))
+        r_eff = np.zeros((self.num_dof, n_steps))
+        e = np.zeros((self.num_dof, n_steps))
 
         et = np.zeros(n_steps)
         cet = np.zeros(n_steps)
