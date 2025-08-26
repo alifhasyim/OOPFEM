@@ -16,10 +16,10 @@ import os
 # Young's modulus
 e_modulus = 2.1e11
 # Area
-r = 0.01
+r = 0.02
 area = mat.pi * mat.pow(r, 2)
 # Density
-density = 1000
+density = 7850
 
 ## Constraint
 c1 = Constraint(True, True, True)
@@ -39,6 +39,7 @@ n4 = struct.add_node(1.5, l, 0.0)
 n5 = struct.add_node(2.0, 0.0, 0.0)
 n6 = struct.add_node(2.5, l, 0.0)
 n7 = struct.add_node(3.0, 0.0, 0.0) 
+
 
 ## Apply force and bc
 n4.set_force(f1)
@@ -99,8 +100,8 @@ struct.solve()
 # Solve the Dynamic problem
 dynna = dynamic(struct)
 # Run generalized-alpha method
-dynna.generalized_alpha(initial_step=0.001, initial_time=0.0, final_time=3,
-                        alpha_1=0.1 , alpha_2=0.000000001, rho=0.7)
+dynna.generalized_alpha(initial_step=0.01, initial_time=0.0, final_time=5,
+                        alpha_1=5.05 , alpha_2=1.33e-4, rho=0.9)
 # Plot results
 dynna.plot_results(dof_index=0)
 dynna.plot_results_all()
@@ -139,7 +140,12 @@ plotter_dyn.close()
 Image.open(gif_path).show()
 
 # 7. Keep interactive control in the live window
-
-plotter_dyn.view_isometric()
+custom_cam = [
+    (20, 5, 7),  # camera location
+    (0, 0, 1),  # look-at point
+    (0, 0, 10)   # up direction
+]
+plotter_dyn.camera_position = custom_cam
+#plotter_dyn.view_isometric()
 plotter_dyn.show_axes()
 plotter_dyn.show()
