@@ -1,0 +1,218 @@
+## Author: Bagus Alifah Hasyim
+## Bridge_extended.py 15 09 2025 
+"""
+Hence we will do the extension 2D bridge example that from the author made
+using a static and dynamic problem case.
+"""
+# Essensial imports
+
+import pyvista as pv
+from PIL import Image
+import os
+import math as mat
+# My oww class 
+
+from Visualizer import Visualizer
+from Structure import Structure
+from Constraint import Constraint
+from Force import Force
+from Dynamic import dynamic
+
+# Initialize the structure
+struct = Structure()
+
+## -------------------------------- ##
+##  PROPERTIES AND BOUNDARY CONDITIONS INFORMATION  ##
+"""
+This section defines the cross-sectional and material properties of the elements,
+assuming all elements have the same properties.
+"""
+# Young's modulus (Pa)
+e_modulus = 2.1e11
+# Area
+r = 0.02
+area = mat.pi * mat.pow(r, 2)
+# Density (kg/m3)
+density = 7850
+## -------------------------------- ##
+##  CONSTRAINTS  ##
+""" 
+Define the constraint conditions of the structure.
+"""
+c1 = Constraint(True, True, True) ## Fixed support for whole DOF type
+c2 = Constraint(False, False, True) ## Fixed support for 2D problem type
+## -------------------------------- ##
+##  FORCE  ##
+""" 
+Define the force conditions applied to the structure.
+"""
+f1 = Force (0, -200e3, 0) ## Force point in y direction
+f2 = Force (0, -200e3, 0) ## Force point in y direction
+## -------------------------------- ##
+##  GEOMETRY  ##
+"""
+Define the geometry of the structure by adding nodes.
+"""
+l = 1/2 * mat.sqrt(3) # Length of the diagonal element
+
+## Define nodes
+# For the front side of the bridge
+n1 = struct.add_node(0.0, 0.0, 0.0)
+n2 = struct.add_node(0.5, l, 0.0)
+n3 = struct.add_node(1.0, 0.0, 0.0)
+n4 = struct.add_node(1.5, l, 0.0) 
+n5 = struct.add_node(2.0, 0.0, 0.0)
+n6 = struct.add_node(2.5, l, 0.0)
+n7 = struct.add_node(3.0, 0.0, 0.0)
+n8 = struct.add_node(3.5, l, 0.0)
+n9 = struct.add_node(4.0, 0.0, 0.0)
+# For the back side of the bridge
+n10 = struct.add_node(0.0, 0.0, 1.0)
+n11 = struct.add_node(0.5, l, 1.0)
+n12 = struct.add_node(1.0, 0.0, 1.0)
+n13 = struct.add_node(1.5, l, 1.0)
+n14 = struct.add_node(2.0, 0.0, 1.0)
+n15 = struct.add_node(2.5, l, 1.0)
+n16 = struct.add_node(3.0, 0.0, 1.0)
+n17 = struct.add_node(3.5, l, 1.0)
+n18 = struct.add_node(4.0, 0.0, 1.0)
+
+## Apply constraints and forces to nodes
+n4.set_force(f1) # Apply force to node 4
+n6.set_force(f1) # Apply force to node 6
+n13.set_force(f2) # Apply force to node 13
+n15.set_force(f2) # Apply force to node 15
+#n11.set_force(f1) # Apply force to node 11
+# Apply the fix end constraint
+n1.set_constraint(c1)
+n9.set_constraint(c1)
+n10.set_constraint(c1)
+n18.set_constraint(c1)
+# Apply the 2D constraint
+n2.set_constraint(c2)
+n3.set_constraint(c2)
+n4.set_constraint(c2)
+n5.set_constraint(c2)
+n6.set_constraint(c2)
+n7.set_constraint(c2)
+n8.set_constraint(c2)
+# -------------------- ##
+n11.set_constraint(c2)
+n12.set_constraint(c2)
+n13.set_constraint(c2)
+n14.set_constraint(c2)
+n15.set_constraint(c2)
+n16.set_constraint(c2)
+n17.set_constraint(c2)
+
+
+## Create elements by connecting nodes
+elements = [
+    # Front Side elements
+    struct.add_element(e_modulus, area, density, n1, n2),
+    struct.add_element(e_modulus, area, density, n1, n3),
+    struct.add_element(e_modulus, area, density, n2, n3),
+    struct.add_element(e_modulus, area, density, n2, n4),
+    struct.add_element(e_modulus, area, density, n3, n4),
+    struct.add_element(e_modulus, area, density, n3, n5),
+    struct.add_element(e_modulus, area, density, n4, n5),
+    struct.add_element(e_modulus, area, density, n4, n6),
+    struct.add_element(e_modulus, area, density, n5, n6),
+    struct.add_element(e_modulus, area, density, n5, n7),
+    struct.add_element(e_modulus, area, density, n6, n7),
+    struct.add_element(e_modulus, area, density, n6, n8),
+    struct.add_element(e_modulus, area, density, n7, n8),
+    struct.add_element(e_modulus, area, density, n7, n9),
+    struct.add_element(e_modulus, area, density, n8, n9),
+    # Back Side elements
+    struct.add_element(e_modulus, area, density, n10, n11),
+    struct.add_element(e_modulus, area, density, n10, n12),
+    struct.add_element(e_modulus, area, density, n11, n12),
+    struct.add_element(e_modulus, area, density, n11, n13),
+    struct.add_element(e_modulus, area, density, n12, n13),
+    struct.add_element(e_modulus, area, density, n12, n14),
+    struct.add_element(e_modulus, area, density, n13, n14),
+    struct.add_element(e_modulus, area, density, n13, n15),
+    struct.add_element(e_modulus, area, density, n14, n15),
+    struct.add_element(e_modulus, area, density, n14, n16),
+    struct.add_element(e_modulus, area, density, n15, n16),
+    struct.add_element(e_modulus, area, density, n15, n17),
+    struct.add_element(e_modulus, area, density, n16, n17),
+    struct.add_element(e_modulus, area, density, n16, n18),
+    struct.add_element(e_modulus, area, density, n17, n18),
+    # Connnecting elements
+    struct.add_element(e_modulus, area, density, n1, n10),
+    struct.add_element(e_modulus, area, density, n2, n11),
+    struct.add_element(e_modulus, area, density, n3, n12),
+    struct.add_element(e_modulus, area, density, n4, n13),
+    struct.add_element(e_modulus, area, density, n5, n14),
+    struct.add_element(e_modulus, area, density, n6, n15),
+    struct.add_element(e_modulus, area, density, n7, n16),
+    struct.add_element(e_modulus, area, density, n8, n17),
+    struct.add_element(e_modulus, area, density, n9, n18)
+]
+
+## -------------------------------- ##
+# Solve the static problem
+struct.solve()
+
+# Visualize the static solution
+visualizer = Visualizer(elements)
+## --- Static visualization ---
+plotter_static = pv.Plotter()
+visualizer.draw_elements(plotter_static)
+visualizer.draw_constraint(plotter_static)
+visualizer.draw_nodal_forces(plotter_static)
+visualizer.post_processing(plotter_static, struct.displacement)
+
+# Just show the static visualization (blocking=True by default)
+plotter_static.show()   # when you close this window, it won't affect the GIF one
+
+# Solve the Dynamic problem
+dynna = dynamic(struct)
+# Run generalized-alpha method
+dynna.generalized_alpha(initial_step=0.002, initial_time=0.0001, final_time=5,
+                        alpha_1=0.01 , alpha_2=0.12, rho=0.9)
+# Plot results
+dynna.plot_results(dof_index=0)
+dynna.plot_results_all()
+
+## Visualize element
+vis = Visualizer(elements)
+## --- Static visualization ---
+plotter_static = pv.Plotter()
+vis.draw_elements(plotter_static)
+vis.draw_constraint(plotter_static)
+vis.draw_nodal_forces(plotter_static)
+vis.post_processing(plotter_static, struct.displacement)
+
+# Just show the static visualization (blocking=True by default)
+plotter_static.show()   # when you close this window, it won't affect the GIF one
+
+## --- Dynamic visualization (record GIF) ---
+plotter_dyn = pv.Plotter()
+plotter_dyn.camera_position = [
+    (5, 5, -6),  # camera location
+    (3, 0.5, 0),     # look-at point
+    (0, 0, 0)    # up direction
+]
+
+# Prepare GIF recording
+gif_path = "gifs/deformation.gif"
+os.makedirs("gifs", exist_ok=True)
+plotter_dyn.open_gif(gif_path)
+
+# Optional: show axes before animation
+plotter_dyn.show_axes()
+
+# Show window in non-blocking mode
+plotter_dyn.show(interactive_update=True)
+
+# Animate and record
+vis.animate_displacement(plotter_dyn, dynna.u, dynna.time)
+
+# Finalize GIF
+plotter_dyn.close()
+
+# Preview saved GIF
+Image.open(gif_path).show()
