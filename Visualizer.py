@@ -1,7 +1,8 @@
 from matplotlib.pyplot import step
 import pyvista as pv
 import numpy as np
-from Structure import Structure
+from moviepy import VideoFileClip
+from pathlib import Path
 
 class Visualizer:
     def __init__(self, elements: list, scale=100.0):
@@ -186,48 +187,42 @@ class Visualizer:
         )
     
     
-     
     def animate_displacement(self, plotter, displacement_history, time_history):
         """
-        Visualise displacement evolution over time.
-
-        Parameters
-        ----------
-        plotter : pv.Plotter
-            PyVista plotter instance (already shown with auto_close=False for live update).
-        displacement_history : np.ndarray
-            Array of shape (total_dofs, n_steps) containing displacement results from solver.
-        time_history : np.ndarray
-            Array of simulation time stamps of length n_steps.
+            _summary_
+        Animate the structure's deformation over time, coloring elements by axial force.
+        Parameters:
+        1. plotter: pyvista.Plotter object for rendering
+        2. displacement_history: 2D numpy array of shape (num_dofs, num_time_steps)
+        3. time_history: 1D numpy array of time steps corresponding to displacement_history
         """
-        
         def apply_displacement(pos, disp, scale=0.05):
+            """_summary_
+
+            Args:
+                pos (_type_): _description_
+                disp (_type_): _description_
+                scale (float, optional): _description_. Defaults to 0.05.
+
+            Returns:
+                _type_: _description_
             """
-            Safely add displacement to a node position, padding zeros if necessary.
-            
-            Parameters
-            ----------
-            pos : np.ndarray
-                Node coordinates (size 2 or 3)
-            disp : np.ndarray
-                Node displacement (may be smaller than pos)
-            scale : float
-                Scaling factor for visualization
-            """
-            disp_full = np.zeros_like(pos)  # create zero vector same size as pos
+            disp_full = np.zeros_like(pos)
             if disp.size > 0:
                 disp_full[:len(disp)] = disp
             return pos + scale * disp_full
-        
+
+        # Here we store the displacement history 
         num_steps = displacement_history.shape[1]
 
-        # --- STEP 1: Create initial MultiBlock mesh (undeformed at t=0) ---
-        forces = []
+        # --- Build initial multiblock from last step's displacement (or t=0 if you prefer) ---
         multi_block = []
+        forces = []
 
+        # Initialize node displacements 
         for node in self.nodes:
             node.displacement = np.array([
-                displacement_history[d, num_steps-1] if d != -1 else 0.0
+                displacement_history[d, num_steps - 1] if d != -1 else 0.0
                 for d in node.dof_number
             ])
 
@@ -235,19 +230,18 @@ class Visualizer:
             nodes = element.get_nodes()
             pos0 = np.array(nodes[0].position)
             pos1 = np.array(nodes[1].position)
+
             disp0 = np.array(nodes[0].displacement)
             disp1 = np.array(nodes[1].displacement)
 
-            disp0_full = np.zeros_like(pos0)
-            disp1_full = np.zeros_like(pos1)
-
-            # Fill in actual displacements (assuming disp0/disp1 might be smaller than 3)
-            disp0_full[:len(disp0)] = disp0
-            disp1_full[:len(disp1)] = disp1
+            # pad to coordinates length
+            disp0_full = np.zeros_like(pos0); disp0_full[:len(disp0)] = disp0
+            disp1_full = np.zeros_like(pos1); disp1_full[:len(disp1)] = disp1
 
             pos0_def = pos0 + self.scale * disp0_full
             pos1_def = pos1 + self.scale * disp1_full
 
+            # compute element force at first time (or whichever baseline you want)
             f_local = element.compute_internal_force(displacement_history[:, 0])
             forces.append(f_local)
 
@@ -255,10 +249,28 @@ class Visualizer:
 
         multi_block_mesh = pv.MultiBlock(multi_block)
         combined = multi_block_mesh.combine()
-        # Assign forces per element (2 points per element)
+
+        # create per-point scalar array (2 point entries per element)
         combined["AxialForce"] = np.array([f for f in forces for _ in range(2)])
 
-        # --- STEP 2: Add mesh once and keep the reference ---
+        # STEP 1: Compute global color limits (symmetric around zero)
+        all_forces = []
+        for step in range(num_steps):
+            step_forces = [element.compute_internal_force(displacement_history[:, step])
+                        for element in self.element]
+            all_forces.extend(step_forces)
+        all_forces = np.asarray(all_forces)
+        absmax = np.max(np.abs(all_forces)) if all_forces.size > 0 else 1.0
+        clim_factor = 1.0
+        clim = (-clim_factor * absmax, clim_factor * absmax)
+
+        # STEP 2: Initial plot with first time step
+        init_forces = np.array([element.compute_internal_force(displacement_history[:, 0])
+                                for element in self.element])
+        # After combine(), assign cell_data (not point_data)
+        combined = multi_block_mesh.combine()
+        combined.cell_data["AxialForce"] = init_forces
+
         actor = plotter.add_mesh(
             combined,
             scalars="AxialForce",
@@ -267,10 +279,15 @@ class Visualizer:
             show_scalar_bar=True,
             scalar_bar_args={"title": f"Axial Force | Time {time_history[0]:.4f} s"},
             lighting=False,
+            clim=list(clim),
         )
         scalar_bar_actor = plotter.scalar_bar
 
-        # --- STEP 3: Animation loop ---
+        # Sanity print
+        print("Initial: n_points=", combined.n_points, "n_cells=", combined.n_cells,
+            "cell_scalars_len=", combined.cell_data["AxialForce"].size)
+
+        # STEP 3: Animation loop (use cell_data) 
         for step in range(1, num_steps):
             forces = []
 
@@ -281,24 +298,37 @@ class Visualizer:
                     for d in node.dof_number
                 ])
 
-            # Update points in each element line
+            # Move each line’s endpoints
             for i, element in enumerate(self.element):
                 nodes = element.get_nodes()
-                pos0_def = apply_displacement(np.array(nodes[0].position), np.array(nodes[0].displacement), self.scale)
-                pos1_def = apply_displacement(np.array(nodes[1].position), np.array(nodes[1].displacement), self.scale)
-
+                pos0_def = apply_displacement(np.array(nodes[0].position),
+                                            np.array(nodes[0].displacement), self.scale)
+                pos1_def = apply_displacement(np.array(nodes[1].position),
+                                            np.array(nodes[1].displacement), self.scale)
                 multi_block[i].points[:] = [pos0_def, pos1_def]
 
                 f_local = element.compute_internal_force(displacement_history[:, step])
                 forces.append(f_local)
 
-            # Combine MultiBlock for scalar assignment
+            # Combine MultiBlock and assign cell scalars (one per element/cell)
             combined = multi_block_mesh.combine()
-            combined["AxialForce"] = np.array([f for f in forces for _ in range(2)])
+            per_cell_forces = np.array(forces)  # length should equal number of elements/cells
+            combined.cell_data["AxialForce"] = per_cell_forces
 
-            # Update mesh and scalar range
+            # Update mapper input and force it to use cell data for coloring
             actor.mapper.SetInputData(combined)
-            actor.mapper.scalar_range = (combined["AxialForce"].min(), combined["AxialForce"].max())
+
+            # Tell mapper to use cell data scalars
+            try:
+                # Prefer VTK-style calls (works with PyVista/VTK)
+                actor.mapper.SetScalarModeToUseCellData()
+            except Exception:
+                # Fallback: use PyVista mapper API
+                actor.mapper.SetScalarMode(1)  # 1 == use cell data in VTK
+
+            actor.mapper.SelectColorArray("AxialForce")
+            actor.mapper.ScalarVisibilityOn()
+            actor.mapper.SetScalarRange(clim[0], clim[1])  # keep fixed range
 
             # Update scalar bar title
             if scalar_bar_actor:
@@ -306,3 +336,12 @@ class Visualizer:
 
             plotter.render()
             plotter.write_frame()
+            
+    def gif_to_mp4_moviepy(gif_path, output_path=None):
+        gif_path = Path(gif_path)
+        if output_path is None:
+            output_path = gif_path.with_suffix(".mp4")
+        
+        clip = VideoFileClip(str(gif_path))
+        clip.write_videofile(str(output_path), codec="libx264")
+        print(f"Converted {gif_path} → {output_path}")

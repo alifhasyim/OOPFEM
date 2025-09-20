@@ -177,18 +177,6 @@ dynna.generalized_alpha(initial_step=0.002, initial_time=0.0001, final_time=5,
 dynna.plot_results(dof_index=0)
 dynna.plot_results_all()
 
-## Visualize element
-vis = Visualizer(elements)
-## --- Static visualization ---
-plotter_static = pv.Plotter()
-vis.draw_elements(plotter_static)
-vis.draw_constraint(plotter_static)
-vis.draw_nodal_forces(plotter_static)
-vis.post_processing(plotter_static, struct.displacement)
-
-# Just show the static visualization (blocking=True by default)
-plotter_static.show()   # when you close this window, it won't affect the GIF one
-
 ## --- Dynamic visualization (record GIF) ---
 plotter_dyn = pv.Plotter()
 plotter_dyn.camera_position = [
@@ -209,10 +197,15 @@ plotter_dyn.show_axes()
 plotter_dyn.show(interactive_update=True)
 
 # Animate and record
-vis.animate_displacement(plotter_dyn, dynna.u, dynna.time)
+visualizer.animate_displacement(plotter_dyn, dynna.u, dynna.time)
 
 # Finalize GIF
 plotter_dyn.close()
 
 # Preview saved GIF
 Image.open(gif_path).show()
+
+# Save the GIF as MP4 using moviepy
+Visualizer.gif_to_mp4_moviepy(gif_path)
+
+

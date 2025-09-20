@@ -1,0 +1,14 @@
+from pathlib import Path
+from moviepy import VideoFileClip
+
+def gif_to_mp4_moviepy(gif_path, output_path=None):
+        gif_path = Path(gif_path)
+        if output_path is None:
+            output_path = gif_path.with_suffix(".mp4")
+        
+        clip = VideoFileClip(str(gif_path))
+        clip.write_videofile(str(output_path), codec="libx264")
+        print(f"Converted {gif_path} → {output_path}")
+
+gif_path = "gifs/deformation.gif"   
+gif_to_mp4_moviepy(gif_path)
