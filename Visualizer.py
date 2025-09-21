@@ -196,16 +196,6 @@ class Visualizer:
         3. time_history: 1D numpy array of time steps corresponding to displacement_history
         """
         def apply_displacement(pos, disp, scale=10):
-            """_summary_
-
-            Args:
-                pos (_type_): _description_
-                disp (_type_): _description_
-                scale (float, optional): _description_. Defaults to 0.05.
-
-            Returns:
-                _type_: _description_
-            """
             disp_full = np.zeros_like(pos)
             if disp.size > 0:
                 disp_full[:len(disp)] = disp
