@@ -14,6 +14,8 @@ r = 457.2 / 2000
 t = 10 / 1000
 a = mat.pi * (mat.pow(r,2) - mat.pow(r-t,2))
 e = 2.1e11
+# Density (kg/m3)
+density = 7850
 
 # Constraint
 c1 = Constraint(True, True, True)
@@ -36,43 +38,15 @@ n3.set_constraint(Constraint(True, True, True))  # fixed
 n4.set_constraint(Constraint(False, False, True))  # fixed again, new instance
 
 ## Create elements
-element1 = struct.add_element(e, a, n1, n2)
-element2 = struct.add_element(e, a, n1, n3)
-element3 = struct.add_element(e, a, n1, n4)
-element4 = struct.add_element(e, a, n2, n3)
-element5 = struct.add_element(e, a, n3, n4)
-element6 = struct.add_element(e, a, n4, n2)
-
-
-for i, node in enumerate(struct.nodes):
-    print(f"Node {i+1} constraint.fixed = {node.constraint.fixed}")
-## Enumerate DOF (must happen before printing them)
-struct.enumerate_dof()
-
-## Now safe to print
-for i, node in enumerate(struct.nodes):
-    print(f"Node {i+1} DOF numbers: {node.dof_number}")
-    
-# Compute Stiffness matrix 
-for i, element in enumerate([element1, element2, element3, element4, element5, element6], start=1):
-    k_e = element.compute_stiffness_matrix()
-    print(f"Element {i} stiffness matrix:")
-    element.print_stiffness_matrix()
-
-# Compute force vector
-element1.compute_force()
-
-# Assemble stiffness matrix
-struct.assemble_stiffness_matrix()
-
-# Assemble load vector matrix
-struct.assemble_load_vector()
+element1 = struct.add_element(e, a, density, n1, n2)
+element2 = struct.add_element(e, a, density, n1, n3)
+element3 = struct.add_element(e, a, density, n1, n4)
+element4 = struct.add_element(e, a, density, n2, n3)
+element5 = struct.add_element(e, a, density, n3, n4)
+element6 = struct.add_element(e, a, density, n4, n2)
 
 # Solve the Matrix problem
 struct.solve()
-
-# Select displacement
-struct.select_displacement(1)
 
 ## Visualize element
 vis = Visualizer([element1, element2, element3, element4, element5, element6])
@@ -80,7 +54,7 @@ plotter = pv.Plotter()
 vis.draw_elements(plotter)
 vis.draw_constraint(plotter)
 vis.draw_nodal_forces(plotter)
-vis.draw_displacement(plotter, struct.displacement)
+vis.post_processing(plotter, struct.displacement)
 #vis.draw_axial_forces(plotter, struct.displacement)
 plotter.view_isometric()
 plotter.show_axes()

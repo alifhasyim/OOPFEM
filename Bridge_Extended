@@ -7,7 +7,6 @@ using a static and dynamic problem case.
 # Essensial imports
 
 import pyvista as pv
-from PIL import Image
 import os
 import math as mat
 # My oww class 
@@ -46,7 +45,7 @@ c2 = Constraint(False, False, True) ## Fixed support for 2D problem type
 """ 
 Define the force conditions applied to the structure.
 """
-f1 = Force (0, -200e3, 0) ## Force point in y direction
+f1 = Force (0, -800e3, 0) ## Force point in y direction
 f2 = Force (0, -200e3, 0) ## Force point in y direction
 ## -------------------------------- ##
 ##  GEOMETRY  ##
@@ -174,8 +173,8 @@ dynna = dynamic(struct)
 dynna.generalized_alpha(initial_step=0.002, initial_time=0.0001, final_time=5,
                         alpha_1=0.01 , alpha_2=0.12, rho=0.9)
 # Plot results
-dynna.plot_results(dof_index=0)
-dynna.plot_results_all()
+#dynna.plot_results(dof_index=15)
+#dynna.plot_results_all()
 
 ## --- Dynamic visualization (record GIF) ---
 plotter_dyn = pv.Plotter()
@@ -186,7 +185,7 @@ plotter_dyn.camera_position = [
 ]
 
 # Prepare GIF recording
-gif_path = "gifs/deformation.gif"
+gif_path = "gifs/deformation_3D.gif"
 os.makedirs("gifs", exist_ok=True)
 plotter_dyn.open_gif(gif_path)
 
@@ -202,8 +201,6 @@ visualizer.animate_displacement(plotter_dyn, dynna.u, dynna.time)
 # Finalize GIF
 plotter_dyn.close()
 
-# Preview saved GIF
-Image.open(gif_path).show()
 
 # Save the GIF as MP4 using moviepy
 Visualizer.gif_to_mp4_moviepy(gif_path)
