@@ -26,7 +26,7 @@ class dynamic:
         self.initial_velocity = self.structure.initial_velocity()
 
     def generalized_alpha(self, initial_step, initial_time, final_time,
-                          alpha_1=0.0, alpha_2=0.0, rho=0.5):
+                          alpha_1=0.01, alpha_2=0.02, rho=0.9):
 
         # Time stepping parameters
         dt = initial_step
@@ -37,9 +37,9 @@ class dynamic:
         p = rho
 
         # Allowable error boundaries
-        v1 = 1
-        v2 = 5
-        ne = 1e-3
+        v1 = 0.5
+        v2 = 1
+        ne = 1e-2
 
         # Construct matrices and force vector
         M = self.M
@@ -98,7 +98,10 @@ class dynamic:
             rma = (1 - alpha_m - 2 * B) / (2 * B)
             rm = rmu * u[:, i] + rmv * v[:, i] + rma * a[:, i]
 
-            r_eff[:, i+1] = R0 - K @ rk + C @ rc + M @ rm
+            # Pick load vector for this step
+            R_t = R0   # use column i of your load matrix
+            
+            r_eff[:, i+1] = R_t - K @ rk + C @ rc + M @ rm
 
             # Update motion
             u[:, i+1] = np.linalg.solve(Keff, r_eff[:, i+1])
@@ -187,7 +190,7 @@ class dynamic:
         plt.figure(figsize=(12, 8))
 
         # Displacement subplot
-        plt.subplot(3, 1, 1)
+        plt.subplot(1, 1, 1)
         for dof in range(num_dofs):
             plt.plot(time_history, self.u[dof, :], label=f'DOF {dof+1}')
         plt.title('Displacement History')
@@ -195,26 +198,38 @@ class dynamic:
         plt.ylabel('Displacement [m]')
         plt.grid()
         plt.legend(loc='upper right')
+        
+        # Y-DOFs (assuming ordering: x=0, y=1, z=2 per node)
+        #y_dofs = range(1, num_dofs, 2)
+
+        #plt.subplot(3, 1, 1)
+        #for dof in y_dofs:
+            #plt.plot(time_history, self.u[dof, :], label=f'DOF {dof+1} (y)')
+        #plt.title('Y-Displacement History')
+        #plt.xlabel('Time [s]')
+        #plt.ylabel('Displacement Y [m]')
+        #plt.grid()
+        #plt.legend(loc='upper right')
 
         # Velocity subplot
-        plt.subplot(3, 1, 2)
-        for dof in range(num_dofs):
-            plt.plot(time_history, self.v[dof, :], label=f'DOF {dof+1}')
-        plt.title('Velocity History')
-        plt.xlabel('Time [s]')
-        plt.ylabel('Velocity [m/s]')
-        plt.grid()
-        plt.legend(loc='upper right')
+        #plt.subplot(3, 1, 2)
+        #for dof in range(num_dofs):
+            #plt.plot(time_history, self.v[dof, :], label=f'DOF {dof+1}')
+        #plt.title('Velocity History')
+        #plt.xlabel('Time [s]')
+        #plt.ylabel('Velocity [m/s]')
+        #plt.grid()
+        #plt.legend(loc='upper right')
 
         # Acceleration subplot
-        plt.subplot(3, 1, 3)
-        for dof in range(num_dofs):
-            plt.plot(time_history, self.a[dof, :], label=f'DOF {dof+1}')
-        plt.title('Acceleration History')
-        plt.xlabel('Time [s]')
-        plt.ylabel('Acceleration [m/s²]')
-        plt.grid()
-        plt.legend(loc='upper right')
+        #plt.subplot(3, 1, 3)
+        #for dof in range(num_dofs):
+            #plt.plot(time_history, self.a[dof, :], label=f'DOF {dof+1}')
+        #plt.title('Acceleration History')
+        #plt.xlabel('Time [s]')
+        #plt.ylabel('Acceleration [m/s²]')
+        #plt.grid()
+        #plt.legend(loc='upper right')
 
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()

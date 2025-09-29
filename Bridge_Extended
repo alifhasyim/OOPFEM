@@ -30,7 +30,8 @@ assuming all elements have the same properties.
 e_modulus = 2.1e11
 # Area
 r = 0.02
-area = mat.pi * mat.pow(r, 2)
+area = mat.pi * mat.pow(r, 2) 
+
 # Density (kg/m3)
 density = 7850
 ## -------------------------------- ##
@@ -45,8 +46,10 @@ c2 = Constraint(False, False, True) ## Fixed support for 2D problem type
 """ 
 Define the force conditions applied to the structure.
 """
-f1 = Force (0, -800e3, 0) ## Force point in y direction
-f2 = Force (0, -200e3, 0) ## Force point in y direction
+f1 = Force(0, -800e3, 0) ## Force point in y direction
+f2 = Force(0, -800e3, 0) ## Force point in y direction
+f3 = Force(0, -200e3, 0) ## Force point in y direction
+f4 = Force(0, -200e3, 0) ## Force point in y direction
 ## -------------------------------- ##
 ##  GEOMETRY  ##
 """
@@ -78,9 +81,9 @@ n18 = struct.add_node(4.0, 0.0, 1.0)
 
 ## Apply constraints and forces to nodes
 n4.set_force(f1) # Apply force to node 4
-n6.set_force(f1) # Apply force to node 6
-n13.set_force(f2) # Apply force to node 13
-n15.set_force(f2) # Apply force to node 15
+#n6.set_force(f2) # Apply force to node 6
+n13.set_force(f3) # Apply force to node 13
+#n15.set_force(f4) # Apply force to node 15
 #n11.set_force(f1) # Apply force to node 11
 # Apply the fix end constraint
 n1.set_constraint(c1)
@@ -170,8 +173,8 @@ plotter_static.show()   # when you close this window, it won't affect the GIF on
 # Solve the Dynamic problem
 dynna = dynamic(struct)
 # Run generalized-alpha method
-dynna.generalized_alpha(initial_step=0.002, initial_time=0.0001, final_time=5,
-                        alpha_1=0.01 , alpha_2=0.12, rho=0.9)
+dynna.generalized_alpha(initial_step=0.001, initial_time=0.001, 
+                        final_time=5, alpha_1=0.25, alpha_2=0.5, rho=0.9)
 # Plot results
 #dynna.plot_results(dof_index=15)
 dynna.plot_results_all()

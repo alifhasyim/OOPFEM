@@ -20,8 +20,8 @@ class Visualizer:
         positions = np.array([np.array(node.get_position()) for node in self.nodes])
         bbox_min, bbox_max = positions.min(axis=0), positions.max(axis=0)
         self.model_size = np.linalg.norm(bbox_max - bbox_min)  # diagonal length
-        self.scale_geometry = 0.1 * self.model_size   # 25% 
-        self.scale_displacement = 8 * self.model_size  # 800%
+        self.scale_geometry = 0.1 * self.model_size    # Change the geometry scale
+        self.scale_displacement = 500 * self.model_size # Change the displacement scale
 
     def draw_elements(self, plotter):
         for elem in self.element:

@@ -87,8 +87,8 @@ dynna = dynamic(struct)
 dynna.generalized_alpha(initial_step=0.002, initial_time=0.0001, final_time=5,
                         alpha_1=0.01 , alpha_2=0.12, rho=0.9)
 # Plot results
-#dynna.plot_results(dof_index=5)
-#dynna.plot_results_all()
+dynna.plot_results(dof_index=5)
+dynna.plot_results_all()
 
 ## --- Dynamic visualization (record GIF) ---
 plotter_dyn = pv.Plotter()

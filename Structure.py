@@ -134,6 +134,8 @@ class Structure:
         # Convert to numpy arrays
         K_ff = self.K_global[np.ix_(free_dofs, free_dofs)]
         f_f = self.f_global[free_dofs]
+        print("K reduced:")
+        print(pd.DataFrame(K_ff))
 
         # Solve reduced system
         u_f = np.linalg.solve(K_ff, f_f)
