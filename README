@@ -1,0 +1,6 @@
+## IMPORTANT NOTES ##
+1. All the basic FEM functionalities are implemeneted in this project (defining node, element, structure, assembling global matrices, applying boundary conditions, solving linear static problems, and visualize the
+results).
+2. The extension of this project is to implement the dynamic solver (time integration scheme), which use the generalized alpha method and try to display the dynamic results interactively.
+3. The benchmark test has been done for the tetrahedral_test (basic element) to verify the static solver.
+4. For the bridge_case and bridge_extended, the benchmark test has not been done yet. However, the plan for the benchmark test is to use the commercial FEM software (e.g., ANSYS, Abaqus, etc.) to verify the static and dynamic solver and try to compare the results (What do you think?)

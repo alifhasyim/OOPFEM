@@ -218,8 +218,8 @@ class Element:
         for i, dof in enumerate(dof_map):
             if dof != -1:
                 u_global[i] = U_global[dof]
-        print("My U global: ")
-        print(u_global)
+        #print("My U global: ")
+        #print(u_global)
 
         # Transform to local coordinate system
         T = self.transformation_matrix()  # 6x2
@@ -228,8 +228,8 @@ class Element:
         # Compute internal force vector (in local coords)
         f_local_component = np.array(self.area / self.get_length_transformation() * self.e_modulus * u_local)
         f_local = f_local_component[1] - f_local_component[0]
-        print("My iternal force vector:")
-        print(f_local)
+        #print("My iternal force vector:")
+        #print(f_local)
         return f_local
     
     def print_nodes(self):

@@ -5,10 +5,9 @@ from moviepy import VideoFileClip
 from pathlib import Path
 
 class Visualizer:
-    def __init__(self, elements: list, scale=100.0):
+    def __init__(self, elements: list):
         self.element = elements
-        self.scale = scale
-        # Extract unique nodes from elements (order preserved)
+        # Extract unique nodes
         seen = set()
         self.nodes = []
         for elem in elements:
@@ -16,64 +15,64 @@ class Visualizer:
                 if node not in seen:
                     seen.add(node)
                     self.nodes.append(node)
-       
-    
+
+        # Compute automatic scale based on model size
+        positions = np.array([np.array(node.get_position()) for node in self.nodes])
+        bbox_min, bbox_max = positions.min(axis=0), positions.max(axis=0)
+        self.model_size = np.linalg.norm(bbox_max - bbox_min)  # diagonal length
+        self.scale_geometry = 0.1 * self.model_size    # Change the geometry scale
+        self.scale_displacement = 500 * self.model_size # Change the displacement scale
+
     def draw_elements(self, plotter):
-        
         for elem in self.element:
             nodes = [np.array(node.get_position()) for node in elem.get_nodes()]
             line = pv.Line(nodes[0], nodes[1])
-            plotter.add_mesh(line, color='grey', line_width=5)
-        
-    
+            plotter.add_mesh(line, color="grey", line_width=5)
+
     def draw_constraint(self, plotter):
         direction_vectors = {
             0: (1, 0, 0),  # x
             1: (0, 1, 0),  # y
             2: (0, 0, 1),  # z
         }
-        colors = {
-        0: 'red',
-        1: 'green',
-        2: 'blue'
-        }
+        colors = {0: "red", 1: "green", 2: "blue"}
 
         for elem in self.element:
-            nodes = elem.get_nodes()
-            
-            for node in nodes:
-                pos = np.array(node.get_position())  # Assuming 3D coords
-                constraint = np.array(node.get_constraint().get_values())   
+            for node in elem.get_nodes():
+                pos = np.array(node.get_position())
+                constraint = np.array(node.get_constraint().get_values())
 
                 for i, is_constrained in enumerate(constraint):
                     if is_constrained:
                         direction = np.array(direction_vectors[i])
-                        # Offset cone so all 3 aren't at same spot
-                        center = pos + direction * -0.1
-                        cone = pv.Cone(center=center, direction=direction, 
-                                       height=self.scale*0.5/200, radius=self.scale*0.1/200)
+                        center = pos + direction * -0.2 * self.scale_geometry
+                        cone = pv.Cone(
+                            center=center,
+                            direction=direction,
+                            height=0.5 * self.scale_geometry,
+                            radius=0.1 * self.scale_geometry,
+                        )
                         plotter.add_mesh(cone, color=colors[i])
-    
-    def draw_nodal_forces(self, plotter):
-        """
-        Draw the element force based on the nodal information.
-        """
-        for elem in self.element:
-            nodes = elem.get_nodes()
-            for node in nodes:
-                position = np.array(node.get_position())
-                force_raw = node.get_force()
-                force = np.array(force_raw)
 
-                if np.allclose(force, [0, 0, 0]):
-                    None
-                else:
-                    arrow = pv.Arrow(start=position, 
-                                     direction=force, 
-                                     tip_length=0.1, 
-                                     tip_radius=0.1, 
-                                     scale=0.5)
-                    plotter.add_mesh(arrow, color='yellow')
+    def draw_nodal_forces(self, plotter):
+        for elem in self.element:
+            for node in elem.get_nodes():
+                pos = np.array(node.get_position())
+                force = np.array(node.get_force(), dtype=float)
+
+                if not np.allclose(force, 0):
+                    mag = np.linalg.norm(force) # Magnitude of the force
+                    if mag > 0:
+                        direction = force / mag
+                        arrow = pv.Arrow(
+                            start=pos,
+                            direction=direction,
+                            scale=2 * self.scale_geometry,
+                            tip_length=0.05 * self.scale_geometry,
+                            tip_radius=0.04 * self.scale_geometry,
+                            shaft_radius=0.02 * self.scale_geometry,
+                        )
+                        plotter.add_mesh(arrow, color="yellow")
                     
     def post_processing(self, plotter, displacement):
         
@@ -89,8 +88,8 @@ class Visualizer:
             disp0 = np.array(nodes[0].displacement)
             disp1 = np.array(nodes[1].displacement)
 
-            pos0_def = pos0 + self.scale * disp0
-            pos1_def = pos1 + self.scale * disp1
+            pos0_def = pos0 + self.scale_displacement * disp0
+            pos1_def = pos1 + self.scale_displacement * disp1
             # Compute force
             f_local = element.compute_internal_force(displacement)
             f_axial = f_local # Axial force
@@ -196,17 +195,7 @@ class Visualizer:
         2. displacement_history: 2D numpy array of shape (num_dofs, num_time_steps)
         3. time_history: 1D numpy array of time steps corresponding to displacement_history
         """
-        def apply_displacement(pos, disp, scale=0.05):
-            """_summary_
-
-            Args:
-                pos (_type_): _description_
-                disp (_type_): _description_
-                scale (float, optional): _description_. Defaults to 0.05.
-
-            Returns:
-                _type_: _description_
-            """
+        def apply_displacement(pos, disp, scale=10):
             disp_full = np.zeros_like(pos)
             if disp.size > 0:
                 disp_full[:len(disp)] = disp
@@ -238,8 +227,8 @@ class Visualizer:
             disp0_full = np.zeros_like(pos0); disp0_full[:len(disp0)] = disp0
             disp1_full = np.zeros_like(pos1); disp1_full[:len(disp1)] = disp1
 
-            pos0_def = pos0 + self.scale * disp0_full
-            pos1_def = pos1 + self.scale * disp1_full
+            pos0_def = pos0 + self.scale_displacement * disp0_full
+            pos1_def = pos1 + self.scale_displacement * disp1_full
 
             # compute element force at first time (or whichever baseline you want)
             f_local = element.compute_internal_force(displacement_history[:, 0])
@@ -248,7 +237,7 @@ class Visualizer:
             multi_block.append(pv.Line(pos0_def, pos1_def))
 
         multi_block_mesh = pv.MultiBlock(multi_block)
-        combined = multi_block_mesh.combine()
+        combined = pv.MultiBlock(multi_block).combine()
 
         # create per-point scalar array (2 point entries per element)
         combined["AxialForce"] = np.array([f for f in forces for _ in range(2)])
@@ -302,9 +291,9 @@ class Visualizer:
             for i, element in enumerate(self.element):
                 nodes = element.get_nodes()
                 pos0_def = apply_displacement(np.array(nodes[0].position),
-                                            np.array(nodes[0].displacement), self.scale)
+                                            np.array(nodes[0].displacement), self.scale_displacement)
                 pos1_def = apply_displacement(np.array(nodes[1].position),
-                                            np.array(nodes[1].displacement), self.scale)
+                                            np.array(nodes[1].displacement), self.scale_displacement)
                 multi_block[i].points[:] = [pos0_def, pos1_def]
 
                 f_local = element.compute_internal_force(displacement_history[:, step])
